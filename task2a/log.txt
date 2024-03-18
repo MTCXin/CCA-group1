@@ -1,0 +1,357 @@
+pod/ibench-cpu created
+Wait for inference to start
+pod/ibench-cpu condition met
+NAME         READY   STATUS    RESTARTS   AGE
+ibench-cpu   1/1     Running   0          2s
+Wait 2 minutes...
+job.batch/parsec-blackscholes created
+Wait for job to complete...
+job.batch/parsec-blackscholes condition met
+NAME                  COMPLETIONS   DURATION   AGE
+parsec-blackscholes   1/1           6s         7s
+Job completed. Save output to file parsec-blackscholes-ibench-cpu.txt
+job.batch "parsec-blackscholes" deleted
+job.batch/parsec-canneal created
+Wait for job to complete...
+job.batch/parsec-canneal condition met
+NAME             COMPLETIONS   DURATION   AGE
+parsec-canneal   1/1           19s        20s
+Job completed. Save output to file parsec-canneal-ibench-cpu.txt
+job.batch "parsec-canneal" deleted
+job.batch/parsec-ferret created
+Wait for job to complete...
+job.batch/parsec-ferret condition met
+NAME            COMPLETIONS   DURATION   AGE
+parsec-ferret   1/1           17s        18s
+Job completed. Save output to file parsec-ferret-ibench-cpu.txt
+job.batch "parsec-ferret" deleted
+job.batch/parsec-freqmine created
+Wait for job to complete...
+job.batch/parsec-freqmine condition met
+NAME              COMPLETIONS   DURATION   AGE
+parsec-freqmine   1/1           19s        19s
+Job completed. Save output to file parsec-freqmine-ibench-cpu.txt
+job.batch "parsec-freqmine" deleted
+job.batch/parsec-dedup created
+Wait for job to complete...
+job.batch/parsec-dedup condition met
+NAME           COMPLETIONS   DURATION   AGE
+parsec-dedup   1/1           57s        57s
+Job completed. Save output to file parsec-dedup-ibench-cpu.txt
+job.batch "parsec-dedup" deleted
+job.batch/parsec-radix created
+Wait for job to complete...
+job.batch/parsec-radix condition met
+NAME           COMPLETIONS   DURATION   AGE
+parsec-radix   1/1           68s        68s
+Job completed. Save output to file parsec-radix-ibench-cpu.txt
+job.batch "parsec-radix" deleted
+job.batch/parsec-vips created
+Wait for job to complete...
+job.batch/parsec-vips condition met
+NAME          COMPLETIONS   DURATION   AGE
+parsec-vips   1/1           3m38s      3m38s
+Job completed. Save output to file parsec-vips-ibench-cpu.txt
+job.batch "parsec-vips" deleted
+Delete all jobs and pods...
+No resources found
+pod "ibench-cpu" deleted
+Wait 30s
+pod/ibench-l1d created
+Wait for inference to start
+pod/ibench-l1d condition met
+NAME         READY   STATUS    RESTARTS   AGE
+ibench-l1d   1/1     Running   0          4s
+Wait 2 minutes...
+job.batch/parsec-blackscholes created
+Wait for job to complete...
+job.batch/parsec-blackscholes condition met
+NAME                  COMPLETIONS   DURATION   AGE
+parsec-blackscholes   1/1           6s         6s
+Job completed. Save output to file parsec-blackscholes-ibench-l1d.txt
+job.batch "parsec-blackscholes" deleted
+job.batch/parsec-canneal created
+Wait for job to complete...
+job.batch/parsec-canneal condition met
+NAME             COMPLETIONS   DURATION   AGE
+parsec-canneal   1/1           19s        19s
+Job completed. Save output to file parsec-canneal-ibench-l1d.txt
+job.batch "parsec-canneal" deleted
+job.batch/parsec-ferret created
+Wait for job to complete...
+job.batch/parsec-ferret condition met
+NAME            COMPLETIONS   DURATION   AGE
+parsec-ferret   1/1           13s        14s
+Job completed. Save output to file parsec-ferret-ibench-l1d.txt
+job.batch "parsec-ferret" deleted
+job.batch/parsec-freqmine created
+Wait for job to complete...
+job.batch/parsec-freqmine condition met
+NAME              COMPLETIONS   DURATION   AGE
+parsec-freqmine   1/1           12s        13s
+Job completed. Save output to file parsec-freqmine-ibench-l1d.txt
+job.batch "parsec-freqmine" deleted
+job.batch/parsec-dedup created
+Wait for job to complete...
+job.batch/parsec-dedup condition met
+NAME           COMPLETIONS   DURATION   AGE
+parsec-dedup   1/1           47s        47s
+Job completed. Save output to file parsec-dedup-ibench-l1d.txt
+job.batch "parsec-dedup" deleted
+job.batch/parsec-radix created
+Wait for job to complete...
+job.batch/parsec-radix condition met
+NAME           COMPLETIONS   DURATION   AGE
+parsec-radix   1/1           71s        71s
+Job completed. Save output to file parsec-radix-ibench-l1d.txt
+job.batch "parsec-radix" deleted
+job.batch/parsec-vips created
+Wait for job to complete...
+job.batch/parsec-vips condition met
+NAME          COMPLETIONS   DURATION   AGE
+parsec-vips   1/1           3m20s      3m20s
+Job completed. Save output to file parsec-vips-ibench-l1d.txt
+job.batch "parsec-vips" deleted
+Delete all jobs and pods...
+No resources found
+pod "ibench-l1d" deleted
+Wait 30s
+pod/ibench-l1i created
+Wait for inference to start
+pod/ibench-l1i condition met
+NAME         READY   STATUS    RESTARTS   AGE
+ibench-l1i   1/1     Running   0          4s
+Wait 2 minutes...
+job.batch/parsec-blackscholes created
+Wait for job to complete...
+job.batch/parsec-blackscholes condition met
+NAME                  COMPLETIONS   DURATION   AGE
+parsec-blackscholes   1/1           7s         7s
+Job completed. Save output to file parsec-blackscholes-ibench-l1i.txt
+job.batch "parsec-blackscholes" deleted
+job.batch/parsec-canneal created
+Wait for job to complete...
+job.batch/parsec-canneal condition met
+NAME             COMPLETIONS   DURATION   AGE
+parsec-canneal   1/1           20s        20s
+Job completed. Save output to file parsec-canneal-ibench-l1i.txt
+job.batch "parsec-canneal" deleted
+job.batch/parsec-ferret created
+Wait for job to complete...
+job.batch/parsec-ferret condition met
+NAME            COMPLETIONS   DURATION   AGE
+parsec-ferret   1/1           20s        20s
+Job completed. Save output to file parsec-ferret-ibench-l1i.txt
+job.batch "parsec-ferret" deleted
+job.batch/parsec-freqmine created
+Wait for job to complete...
+job.batch/parsec-freqmine condition met
+NAME              COMPLETIONS   DURATION   AGE
+parsec-freqmine   1/1           19s        19s
+Job completed. Save output to file parsec-freqmine-ibench-l1i.txt
+job.batch "parsec-freqmine" deleted
+job.batch/parsec-dedup created
+Wait for job to complete...
+job.batch/parsec-dedup condition met
+NAME           COMPLETIONS   DURATION   AGE
+parsec-dedup   1/1           60s        60s
+Job completed. Save output to file parsec-dedup-ibench-l1i.txt
+job.batch "parsec-dedup" deleted
+job.batch/parsec-radix created
+Wait for job to complete...
+job.batch/parsec-radix condition met
+NAME           COMPLETIONS   DURATION   AGE
+parsec-radix   1/1           72s        72s
+Job completed. Save output to file parsec-radix-ibench-l1i.txt
+job.batch "parsec-radix" deleted
+job.batch/parsec-vips created
+Wait for job to complete...
+job.batch/parsec-vips condition met
+NAME          COMPLETIONS   DURATION   AGE
+parsec-vips   1/1           3m35s      3m36s
+Job completed. Save output to file parsec-vips-ibench-l1i.txt
+job.batch "parsec-vips" deleted
+Delete all jobs and pods...
+No resources found
+pod "ibench-l1i" deleted
+Wait 30s
+pod/ibench-l2 created
+Wait for inference to start
+pod/ibench-l2 condition met
+NAME        READY   STATUS    RESTARTS   AGE
+ibench-l2   1/1     Running   0          4s
+Wait 2 minutes...
+job.batch/parsec-blackscholes created
+Wait for job to complete...
+job.batch/parsec-blackscholes condition met
+NAME                  COMPLETIONS   DURATION   AGE
+parsec-blackscholes   1/1           6s         6s
+Job completed. Save output to file parsec-blackscholes-ibench-l2.txt
+job.batch "parsec-blackscholes" deleted
+job.batch/parsec-canneal created
+Wait for job to complete...
+job.batch/parsec-canneal condition met
+NAME             COMPLETIONS   DURATION   AGE
+parsec-canneal   1/1           19s        19s
+Job completed. Save output to file parsec-canneal-ibench-l2.txt
+job.batch "parsec-canneal" deleted
+job.batch/parsec-ferret created
+Wait for job to complete...
+job.batch/parsec-ferret condition met
+NAME            COMPLETIONS   DURATION   AGE
+parsec-ferret   1/1           14s        14s
+Job completed. Save output to file parsec-ferret-ibench-l2.txt
+job.batch "parsec-ferret" deleted
+job.batch/parsec-freqmine created
+Wait for job to complete...
+job.batch/parsec-freqmine condition met
+NAME              COMPLETIONS   DURATION   AGE
+parsec-freqmine   1/1           12s        12s
+Job completed. Save output to file parsec-freqmine-ibench-l2.txt
+job.batch "parsec-freqmine" deleted
+job.batch/parsec-dedup created
+Wait for job to complete...
+job.batch/parsec-dedup condition met
+NAME           COMPLETIONS   DURATION   AGE
+parsec-dedup   1/1           43s        44s
+Job completed. Save output to file parsec-dedup-ibench-l2.txt
+job.batch "parsec-dedup" deleted
+job.batch/parsec-radix created
+Wait for job to complete...
+job.batch/parsec-radix condition met
+NAME           COMPLETIONS   DURATION   AGE
+parsec-radix   1/1           72s        72s
+Job completed. Save output to file parsec-radix-ibench-l2.txt
+job.batch "parsec-radix" deleted
+job.batch/parsec-vips created
+Wait for job to complete...
+job.batch/parsec-vips condition met
+NAME          COMPLETIONS   DURATION   AGE
+parsec-vips   1/1           3m16s      3m17s
+Job completed. Save output to file parsec-vips-ibench-l2.txt
+job.batch "parsec-vips" deleted
+Delete all jobs and pods...
+No resources found
+pod "ibench-l2" deleted
+Wait 30s
+pod/ibench-llc created
+Wait for inference to start
+pod/ibench-llc condition met
+NAME         READY   STATUS    RESTARTS   AGE
+ibench-llc   1/1     Running   0          4s
+Wait 2 minutes...
+job.batch/parsec-blackscholes created
+Wait for job to complete...
+job.batch/parsec-blackscholes condition met
+NAME                  COMPLETIONS   DURATION   AGE
+parsec-blackscholes   1/1           7s         7s
+Job completed. Save output to file parsec-blackscholes-ibench-llc.txt
+job.batch "parsec-blackscholes" deleted
+job.batch/parsec-canneal created
+Wait for job to complete...
+job.batch/parsec-canneal condition met
+NAME             COMPLETIONS   DURATION   AGE
+parsec-canneal   1/1           29s        29s
+Job completed. Save output to file parsec-canneal-ibench-llc.txt
+job.batch "parsec-canneal" deleted
+job.batch/parsec-ferret created
+Wait for job to complete...
+job.batch/parsec-ferret condition met
+NAME            COMPLETIONS   DURATION   AGE
+parsec-ferret   1/1           23s        23s
+Job completed. Save output to file parsec-ferret-ibench-llc.txt
+job.batch "parsec-ferret" deleted
+job.batch/parsec-freqmine created
+Wait for job to complete...
+job.batch/parsec-freqmine condition met
+NAME              COMPLETIONS   DURATION   AGE
+parsec-freqmine   1/1           18s        19s
+Job completed. Save output to file parsec-freqmine-ibench-llc.txt
+job.batch "parsec-freqmine" deleted
+job.batch/parsec-dedup created
+Wait for job to complete...
+job.batch/parsec-dedup condition met
+NAME           COMPLETIONS   DURATION   AGE
+parsec-dedup   1/1           67s        67s
+Job completed. Save output to file parsec-dedup-ibench-llc.txt
+job.batch "parsec-dedup" deleted
+job.batch/parsec-radix created
+Wait for job to complete...
+job.batch/parsec-radix condition met
+NAME           COMPLETIONS   DURATION   AGE
+parsec-radix   1/1           102s       102s
+Job completed. Save output to file parsec-radix-ibench-llc.txt
+job.batch "parsec-radix" deleted
+job.batch/parsec-vips created
+Wait for job to complete...
+job.batch/parsec-vips condition met
+NAME          COMPLETIONS   DURATION   AGE
+parsec-vips   1/1           4m         4m
+Job completed. Save output to file parsec-vips-ibench-llc.txt
+job.batch "parsec-vips" deleted
+Delete all jobs and pods...
+No resources found
+pod "ibench-llc" deleted
+Wait 30s
+pod/ibench-membw created
+Wait for inference to start
+pod/ibench-membw condition met
+NAME           READY   STATUS    RESTARTS   AGE
+ibench-membw   1/1     Running   0          4s
+Wait 2 minutes...
+job.batch/parsec-blackscholes created
+Wait for job to complete...
+job.batch/parsec-blackscholes condition met
+NAME                  COMPLETIONS   DURATION   AGE
+parsec-blackscholes   1/1           7s         7s
+Job completed. Save output to file parsec-blackscholes-ibench-membw.txt
+job.batch "parsec-blackscholes" deleted
+job.batch/parsec-canneal created
+Wait for job to complete...
+job.batch/parsec-canneal condition met
+NAME             COMPLETIONS   DURATION   AGE
+parsec-canneal   1/1           21s        21s
+Job completed. Save output to file parsec-canneal-ibench-membw.txt
+job.batch "parsec-canneal" deleted
+job.batch/parsec-ferret created
+Wait for job to complete...
+job.batch/parsec-ferret condition met
+NAME            COMPLETIONS   DURATION   AGE
+parsec-ferret   1/1           19s        19s
+Job completed. Save output to file parsec-ferret-ibench-membw.txt
+job.batch "parsec-ferret" deleted
+job.batch/parsec-freqmine created
+Wait for job to complete...
+job.batch/parsec-freqmine condition met
+NAME              COMPLETIONS   DURATION   AGE
+parsec-freqmine   1/1           16s        16s
+Job completed. Save output to file parsec-freqmine-ibench-membw.txt
+job.batch "parsec-freqmine" deleted
+job.batch/parsec-dedup created
+Wait for job to complete...
+job.batch/parsec-dedup condition met
+NAME           COMPLETIONS   DURATION   AGE
+parsec-dedup   1/1           51s        51s
+Job completed. Save output to file parsec-dedup-ibench-membw.txt
+job.batch "parsec-dedup" deleted
+job.batch/parsec-radix created
+Wait for job to complete...
+job.batch/parsec-radix condition met
+NAME           COMPLETIONS   DURATION   AGE
+parsec-radix   1/1           73s        73s
+Job completed. Save output to file parsec-radix-ibench-membw.txt
+job.batch "parsec-radix" deleted
+job.batch/parsec-vips created
+Wait for job to complete...
+job.batch/parsec-vips condition met
+NAME          COMPLETIONS   DURATION   AGE
+parsec-vips   1/1           3m24s      3m24s
+Job completed. Save output to file parsec-vips-ibench-membw.txt
+job.batch "parsec-vips" deleted
+Delete all jobs and pods...
+No resources found
+pod "ibench-membw" deleted
+Wait 30s
+./part2a.sh: line 32: ait: command not found
+./part2a.sh: line 34: syntax error near unexpected token `done'
+./part2a.sh: line 34: `    done'
