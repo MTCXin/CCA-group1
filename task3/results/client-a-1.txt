@@ -1,0 +1,113 @@
+cd memcache-perf-dynamic
+./mcperf -T 2 -A
+Welcome to Ubuntu 22.04.3 LTS (GNU/Linux 6.5.0-1013-gcp x86_64)
+
+ * Documentation:  https://help.ubuntu.com
+ * Management:     https://landscape.canonical.com
+ * Support:        https://ubuntu.com/pro
+
+  System information as of Mon Apr 22 14:50:38 UTC 2024
+
+  System load:  0.53759765625      Processes:             120
+  Usage of /:   4.0% of 123.87GB   Users logged in:       0
+  Memory usage: 17%                IPv4 address for ens4: 10.0.16.7
+  Swap usage:   0%
+
+
+Expanded Security Maintenance for Applications is not enabled.
+
+75 updates can be applied immediately.
+51 of these updates are standard security updates.
+To see these additional updates run: apt list --upgradable
+
+Enable ESM Apps to receive additional future security updates.
+See https://ubuntu.com/esm or run: sudo pro status
+
+
+*** System restart required ***
+Last login: Mon Apr 22 14:41:49 2024 from 195.176.112.204
+cd memcache-perf-dynamic
+./mcperf -T 2 -A
+ubuntu@client-agent-a-93x2:~$ cd memcache-perf-dynamic
+ubuntu@client-agent-a-93x2:~/memcache-perf-dynamic$ ./mcperf -T 2 -A
+Local QPS = 9305.5 (93055 / 10.0s) - 93055.0, 0.0
+#type       avg     std     min      p5     p10     p50     p67     p75     p80
+    p85     p90     p95     p99    p999   p9999 QPS
+read      707.9   848.7   173.5   242.9   266.1   469.9   584.6   658.7   723.0
+  820.5  1019.6  2954.9  3840.3  8845.0 13611.9   9305.5
+Local QPS = 9631.0 (96310 / 10.0s) - 96310.0, 0.0
+#type       avg     std     min      p5     p10     p50     p67     p75     p80
+    p85     p90     p95     p99    p999   p9999 QPS
+read      488.4   721.8   173.5   230.6   245.2   351.0   419.6   464.8   503.2
+  563.8   673.9  1001.9  2667.9 10873.4 15540.9   9631.0
+Local QPS = 9563.3 (95633 / 10.0s) - 95633.0, 0.0
+#type       avg     std     min      p5     p10     p50     p67     p75     p80
+    p85     p90     p95     p99    p999   p9999 QPS
+read      379.2   333.1   187.4   234.6   248.4   341.7   392.7   423.1   445.8
+  472.4   509.6   573.8   766.4  5439.3 12972.2   9563.3
+Local QPS = 9676.0 (96760 / 10.0s) - 96760.0, 0.0
+#type       avg     std     min      p5     p10     p50     p67     p75     p80
+    p85     p90     p95     p99    p999   p9999 QPS
+read      373.4   333.5   173.5   233.0   246.8   337.4   387.1   416.0   436.9
+  463.3   498.2   553.8   731.6  6254.0 11145.0   9676.0
+Local QPS = 9695.9 (96959 / 10.0s) - 96959.0, 0.0
+#type       avg     std     min      p5     p10     p50     p67     p75     p80
+    p85     p90     p95     p99    p999   p9999 QPS
+read      382.5   307.3   173.5   234.4   249.0   347.0   401.6   433.0   456.1
+  482.9   518.4   579.3   768.1  4443.1 11608.9   9695.9
+Local QPS = 9698.7 (96987 / 10.0s) - 96987.0, 0.0
+#type       avg     std     min      p5     p10     p50     p67     p75     p80
+    p85     p90     p95     p99    p999   p9999 QPS
+read      374.7   266.2   187.4   232.0   246.6   342.4   395.6   425.8   447.7
+  472.5   507.2   566.1   740.8  4519.9  9526.2   9698.7
+Local QPS = 9630.7 (96307 / 10.0s) - 96307.0, 0.0
+#type       avg     std     min      p5     p10     p50     p67     p75     p80
+    p85     p90     p95     p99    p999   p9999 QPS
+read      369.6   342.9   187.4   233.3   246.5   333.1   381.5   408.9   429.1
+  453.2   484.1   536.6   714.5  6965.8 11561.5   9630.7
+Local QPS = 9663.0 (96630 / 10.0s) - 96630.0, 0.0
+#type       avg     std     min      p5     p10     p50     p67     p75     p80
+    p85     p90     p95     p99    p999   p9999 QPS
+read      393.2   322.4   187.4   236.0   251.6   360.1   416.5   447.2   468.7
+  496.9   533.5   591.6   798.5  4476.4 12385.5   9663.0
+Local QPS = 9682.4 (96824 / 10.0s) - 96824.0, 0.0
+#type       avg     std     min      p5     p10     p50     p67     p75     p80
+    p85     p90     p95     p99    p999   p9999 QPS
+read      366.1   267.7   173.5   231.9   245.8   334.4   383.6   411.9   432.6
+  459.0   493.4   548.3   722.2  4247.2 11462.3   9682.4
+Local QPS = 9666.7 (96667 / 10.0s) - 96667.0, 0.0
+#type       avg     std     min      p5     p10     p50     p67     p75     p80
+    p85     p90     p95     p99    p999   p9999 QPS
+read      376.5   344.0   173.5   235.5   249.0   336.9   387.5   417.0   437.8
+  464.4   499.7   561.0   808.5  6741.1 11853.6   9666.7
+Local QPS = 9679.1 (96791 / 10.0s) - 96791.0, 0.0
+#type       avg     std     min      p5     p10     p50     p67     p75     p80
+    p85     p90     p95     p99    p999   p9999 QPS
+read      353.9   164.0   173.5   232.0   246.2   331.0   378.4   405.2   426.4
+  450.5   480.2   527.7   644.8  1982.8  7237.1   9679.1
+Local QPS = 9661.5 (96615 / 10.0s) - 96615.0, 0.0
+#type       avg     std     min      p5     p10     p50     p67     p75     p80
+    p85     p90     p95     p99    p999   p9999 QPS
+read      359.0   189.5   173.5   233.0   247.8   335.7   383.3   410.4   430.6
+  454.7   484.9   533.8   661.7  2333.9  8428.8   9661.5
+Local QPS = 9717.6 (97176 / 10.0s) - 97176.0, 0.0
+#type       avg     std     min      p5     p10     p50     p67     p75     p80
+    p85     p90     p95     p99    p999   p9999 QPS
+read      356.5   147.8   173.5   231.5   246.4   334.4   381.7   409.0   429.7
+  454.0   484.6   534.5   673.4  1661.5  5898.0   9717.6
+Local QPS = 9639.9 (96399 / 10.0s) - 96399.0, 0.0
+#type       avg     std     min      p5     p10     p50     p67     p75     p80
+    p85     p90     p95     p99    p999   p9999 QPS
+read      353.7   171.8   173.5   228.5   243.2   330.9   378.4   405.0   425.3
+  448.6   478.1   527.3   656.0  2527.8  6636.9   9639.9
+Local QPS = 9699.4 (96994 / 10.0s) - 96994.0, 0.0
+#type       avg     std     min      p5     p10     p50     p67     p75     p80
+    p85     p90     p95     p99    p999   p9999 QPS
+read      352.6   199.5   173.5   228.1   242.5   327.3   375.5   403.6   424.7
+  448.7   478.7   528.2   661.4  2011.8  8522.6   9699.4
+Local QPS = 9656.3 (96563 / 10.0s) - 96563.0, 0.0
+#type       avg     std     min      p5     p10     p50     p67     p75     p80
+    p85     p90     p95     p99    p999   p9999 QPS
+read      353.6   194.8   173.5   229.9   244.4   329.5   377.4   405.3   426.5
+  450.8   480.6   528.2   643.0  1656.3  8742.8   9656.3
+
