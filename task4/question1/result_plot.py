@@ -14,7 +14,6 @@ all_data = pd.DataFrame()
 for file in all_files:
     df = pd.read_csv(file)
     measurement_type = os.path.basename(file).split('-run')[0]
-    print(measurement_type)
     df['measurement'] = measurement_type
     all_data = pd.concat([all_data, df], ignore_index=True)
 
@@ -69,13 +68,14 @@ measurements = all_data['measurement'].unique()
 
 for measurement in measurements:
     fig, ax1 = plt.subplots(figsize=(12, 8))
+    ax1.set_ylim([0, 2])
+    ax1.set_xlim([0, 130])
 
     ax1.axhline(y=1, color='tab:brown', linestyle='--', label='SLO latency')
     measurement_data = summary[summary['measurement'] == measurement]
     ax1.plot(measurement_data['QPS_mean'], measurement_data['p95_mean'],
                 marker='^', color='darkgreen', label='p95 latency')
     
-    ax1.set_ylim([0, 2])
     
     ax1.set_xlabel('QPS (k)')
     ax1.set_ylabel('p95 Latency (ms)', color='darkgreen')
@@ -84,9 +84,9 @@ for measurement in measurements:
     ax1.grid(which='major', linestyle='-', linewidth='0.5', color='gray')
     ax1.grid(which='minor', linestyle=':', linewidth='0.5', color='gray')
     ax1.minorticks_on()
-    ax1.set_xlim([0, 125])
 
     ax2 = ax1.twinx()
+    ax2.set_ylim([0, 200])
 
     ax2.plot(measurement_data['QPS_mean'], measurement_data['CPU_mean'],
                 marker='o', color='tab:blue', label='CPU utilization')
