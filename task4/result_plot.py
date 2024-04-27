@@ -33,10 +33,13 @@ summary['p95_std'] /= 1000
 
 
 markers = {
-    'measure-T1-C0': 'o', 'measure-T1-C0-1': 's', 'measure-T2-C0': '^', 'measure-T2-C0-1': 'D'
+    'measure-T1-C0': 'o', 'measure-T2-C0,1': 's', 'measure-T2-C0': '^',
+      'measure-T1-C0,1': 'D', 'measure-T3-C0': 'o', 'measure-T3-C0,1': 'o'
 }
 
-labels = {'measure-T1-C0': 'T=1, C=1', 'measure-T1-C0-1': 'T=1, C=2', 'measure-T2-C0': 'T=2, C=1', 'measure-T2-C0-1': 'T=2, C=2'}
+labels = {'measure-T1-C0': 'T=1, C=1', 'measure-T1-C0,1': 'T=1, C=2', 
+          'measure-T2-C0': 'T=2, C=1', 'measure-T2-C0,1': 'T=2, C=2',
+          'measure-T3-C0': 'T=3, C=1', 'measure-T3-C0,1': 'T=3, C=2'}
 
 
 all_files = glob.glob(os.path.join(target_folder, '*.csv'))
