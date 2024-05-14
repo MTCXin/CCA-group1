@@ -12,6 +12,7 @@ cpuset_cpus = "0"
 container_name = "parsec"
 detach = True
 remove = True
+cpu_quota = 50000
 
 # Start the container
 container = client.containers.run(
@@ -20,7 +21,8 @@ container = client.containers.run(
     cpuset_cpus=cpuset_cpus,
     name=container_name,
     detach=detach,
-    remove=remove
+    remove=remove,
+    cpu_quota=cpu_quota
 )
 
 # Print container ID
