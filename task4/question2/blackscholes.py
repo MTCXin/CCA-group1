@@ -28,13 +28,17 @@ container = client.containers.run(
 # Print container ID
 print("Container ID:", container.id)
 while True:
-    # Get the container
-    container = client.containers.get(container.id)
+    try:
+        # Get the container
+        container = client.containers.get(container.id)
 
-    # Check the status
-    if container.status == "exited":
-        print("completed")
+        # Check the status
+        if container.status == "exited":
+            print("completed")
+            break
+        else:
+            print("pending")
+            time.sleep(30)
+    except docker.errors.NotFound:
+        print("Container not found, maybe it's already completed.")
         break
-    else:
-        print("pending")
-        time.sleep(30)
