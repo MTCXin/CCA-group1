@@ -1,5 +1,5 @@
 import docker
-
+import time
 # Create Docker client
 client = docker.from_env()
 
@@ -27,3 +27,14 @@ container = client.containers.run(
 
 # Print container ID
 print("Container ID:", container.id)
+while True:
+    # Get the container
+    container = client.containers.get(container.id)
+
+    # Check the status
+    if container.status == "exited":
+        print("completed")
+        break
+    else:
+        print("pending")
+        time.sleep(30)
