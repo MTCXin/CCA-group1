@@ -1,5 +1,6 @@
 
 > export KOPS_STATE_STORE=<your-gcp-state-store> # e.g. gs://cca-eth-2024-group-1-keuscha/
+> export KOPS_STATE_STORE=gs://cca-eth-2024-group-1-keuscha/ 
 > PROJECT='gcloud config get-value project'
 
 > ./../setup/start-cluster.sh
@@ -11,10 +12,10 @@
 > gcloud compute ssh --ssh-key-file ~/.ssh/cloud-computing ubuntu@<MACHINE_NAME> --zone europe-west3-a
 
 # upload setup scripts
-gcloud compute scp --scp-flag=-r ../setup/ ubuntu@memcache-server-b9xd:/home/ubuntu/ --zone europe-west3-a
-gcloud compute scp cpu_utilization.py ubuntu@memcache-server-b9xd:/home/ubuntu/ --zone europe-west3-a
-gcloud compute scp --scp-flag=-r ../setup/ ubuntu@client-agent-xcr4:/home/ubuntu/ --zone europe-west3-a
-gcloud compute scp --scp-flag=-r ../setup/ ubuntu@client-measure-m49m:/home/ubuntu/ --zone europe-west3-a
+gcloud compute scp --scp-flag=-r ../setup/ ubuntu@memcache-server-XXXX:/home/ubuntu/ --zone europe-west3-a
+gcloud compute scp scheduler/scheduler.py ubuntu@memcache-server-XXXX:/home/ubuntu/ --zone europe-west3-a
+gcloud compute scp --scp-flag=-r ../setup/ ubuntu@client-agent-XXXX:/home/ubuntu/ --zone europe-west3-a
+gcloud compute scp --scp-flag=-r ../setup/ ubuntu@client-measure-XXXX:/home/ubuntu/ --zone europe-west3-a
 
 
 # execute this on client and measure

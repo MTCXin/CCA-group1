@@ -5,6 +5,14 @@ import sys
 import docker
 from time import sleep
 
+# TODO find suitable values for these variables
+MAX_LOAD_LOW = 3 # the max weight of jobs when memcached uses 2 cores
+MAX_LOAD_HIGH = 5 # the max weight of jobs when memcached uses 1 core
+CPU_THRESHOLD_1_CORE = 60 # CPU utilization threshold for switching from 1 to 2 cores
+CPU_THRESHOLD_2_CORES = 100 # CPU utilization threshold for switching from 2 to 1 core
+SLEEP_TIME = 1 # sleep time between two iterations of the main loop
+
+
 class BatchJob(object):
     name = ""
     num_threads = 4 # default, can be overriden
@@ -12,7 +20,7 @@ class BatchJob(object):
     command = ""
     weight = 0 # how cpu intensive the job is
     container = None # will be set once the container has been created
-    cores = [] # will be set when the job is started and be updated dynamically
+    cores = [] # will be set when the job is started and is updated dynamically
     has_finished_ = False # will be set once the container finished and was removed
 
     def is_running(self):
@@ -53,6 +61,7 @@ class BatchJob(object):
                                                image=self.image,
                                                command=self.command)
         logger.job_start(self.name, cpu_set, self.num_threads)
+        print(f"Start {self}")
         self.container = container
 
     def pause_job(self, logger):
@@ -65,6 +74,7 @@ class BatchJob(object):
         try:
             self.container.pause()
             logger.job_pause(self.name)
+            print(f"Pause {self}")
             return True
         except:
             print(f"ERROR: Could not pause job {self.name}")
@@ -80,6 +90,7 @@ class BatchJob(object):
         try:
             self.container.unpause()
             logger.job_unpause(self.name)
+            print(f"Unpause {self}")
             return True
         except:
             print(f"ERROR: Could not unpause job {self.name}")
@@ -100,6 +111,7 @@ class BatchJob(object):
                 logger.job_end(self.name)
                 self.container = None
                 self.has_finished_ = True
+                print(f"Finished {self}")
                 return True
             except:
                 print(f"ERROR: Could not finish job {self.name}")
@@ -114,6 +126,7 @@ class BatchJob(object):
         self.container.update(cpuset_cpus=",".join(cpu_set))
         logger.update_cores(self.name, cpu_set)
         self.cores = cpu_set
+        print(f"Update cores {self}")
         return True
     
     def remove_container(self, force=False):
@@ -188,14 +201,15 @@ class MemcachedProcess(object):
                     self.pid = proc.pid
         return self.pid
 
-    def update_memcached_cores(self, cores):
+    def update_memcached_cores(self, cores, enable_log=True):
         if self.pid is None:
             print(f"ERROR: Could not update memcached cores because pid is None")
             return False
         print(f'Update memcache CPUs to {cores}')
         command = f'sudo taskset -a -cp {",".join(cores)} {self.pid}'
         subprocess.run(command.split(" "), stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
-        self.logger.update_cores(slogger.Job.MEMCACHED, cores)
+        if enable_log:
+            self.logger.update_cores(slogger.Job.MEMCACHED, cores)
         self.cores = cores
         return True
 
@@ -208,8 +222,9 @@ class Scheduler(object):
         self.small_jobs = small_jobs
         self.medium_jobs = medium_jobs
         self.large_jobs = large_jobs
-        self.job_cores = [2,3]
+        self.job_cores = []
         self.get_memcached_pid()
+        self.curr_max_load = 0
 
     def get_all_jobs(self) -> list[BatchJob]:
         return self.small_jobs + self.medium_jobs + self.large_jobs
@@ -220,7 +235,7 @@ class Scheduler(object):
     def check_all_jobs_finished(self):
         return all(j.has_finished() for j in self.get_all_jobs())
 
-    def finish_jobs(self) -> int:
+    def remove_finished_jobs(self) -> int:
         weight = 0
         for job in self.get_all_jobs():
             if job.is_newly_finished():
@@ -242,14 +257,6 @@ class Scheduler(object):
         for job in self.get_all_jobs():
             job.remove_container(force=force)
 
-    def pause_jobs(self, jobs_to_pause: list[BatchJob]):
-        for job in jobs_to_pause:
-            job.pause_job(self.logger)
-
-    def unpause_jobs(self, jobs_to_unpause: list[BatchJob]):
-        for job in jobs_to_unpause:
-            job.unpause_job(self.logger)
-
     def get_current_load(self):
         load = 0
         for job in self.get_all_jobs():
@@ -258,18 +265,25 @@ class Scheduler(object):
         return load
 
     def start_run(self):
+        # start with 2 memcached cores in case there is high load in the beginning
+        self.memcached.update_memcached_cores([0,1], enable_log=False)
+        sleep(2)
+        print("Start scheduler")
         self.logger = slogger.SchedulerLogger()
         self.logger.job_start(slogger.Job.MEMCACHED)
-    
-    def finish_round(self):
-        if not self.check_all_jobs_finished():
-            return False
+        self.curr_max_load = MAX_LOAD_LOW
+        self.job_cores = [2,3]
+
+    def end_run(self):
+        self.remove_finished_jobs()
         self.logger.end()
-        return True
-    
+        print("All jobs have finished. Force removing all containers in 10s...")
+        sleep(10)
+        self.remove_all_jobs(force=True)
+
+    # start new job(s) with upper bound on weights
     def start_next_job(self, weight) -> int:
-        # TODO maybe there is a better way
-        weight = max(weight, 5-self.get_current_load()) # make sure load is never above 5
+        # TODO find better strategy
         jobs_to_consider = []
         new_jobs = []
         if weight >= 4:
@@ -290,10 +304,9 @@ class Scheduler(object):
         
         return self.start_next_job(weight/2) + self.start_next_job(weight/2)
 
-    
+    # unpause job(s) with upper bound on weights
     def unpause_job(self, weight) -> int:
-        # TODO maybe there is a better way
-        weight = max(weight, 5-self.get_current_load()) # make sure load is never above 5
+        # TODO find better strategy
         jobs_to_consider = []
         paused_jobs = []
         if weight >= 4:
@@ -313,9 +326,9 @@ class Scheduler(object):
                 return paused_jobs[0].weight
         return self.unpause_job(weight/2) + self.unpause_job(weight/2)
     
+    # pause job(s) with bound on weights
     def pause_job(self, weight) -> int:
-        # TODO maybe there is a better way
-        weight = min(weight, self.get_current_load()-3) # make sure load is never lower than 3
+        # TODO find better strategy
         if weight <= 0:
             return 0
         jobs_to_consider = []
@@ -336,6 +349,17 @@ class Scheduler(object):
             if t:
                 return running_jobs[0].weight
         return self.pause_job(weight/2) + self.pause_job(weight/2)
+    
+    # starts/unpauses/pauses jobs depending on curr and max load
+    def start_pause_unpause_jobs(self):
+        # TODO find better strategy
+        curr_load = self.get_current_load()
+        if curr_load > self.curr_max_load:
+            self.pause_job(curr_load-self.curr_max_load)
+        elif curr_load < self.curr_max_load:
+            add_weight = self.unpause_job(self.curr_max_load-curr_load)
+            if add_weight + curr_load < self.curr_max_load:
+                self.start_next_job(self.curr_max_load-add_weight-curr_load)
         
 
     # main method!
@@ -343,49 +367,47 @@ class Scheduler(object):
         self.start_run()
 
         # TODO optimize this strategy, implement other strategies and compare ...
-
-        LOAD_VARIATION = 2
-
         while True:
-            cpu_usage = self.get_cpu_usage() # cpu usage per core
-            cpu_usage_memcached = sum([cpu_usage[i] for i in memcached.cores])
+            if self.check_all_jobs_finished():
+                break
 
+            # get cpu usage per core
+            cpu_usage = self.get_cpu_usage() # TODO maybe we could measure the CPU usage multpile times and average
+            cpu_usage_memcached = sum([cpu_usage[i] for i in memcached.cores])
             print(f"CPU utilization = {cpu_usage}")
             print(f"memcached CPU utilization = {cpu_usage_memcached}")
 
             # memcached is always run on dedicated cores such that we can measure the CPU utilization 
             # depending on the load memcached gets 1 or 2 cores
-            if len(memcached.cores) == 1 and cpu_usage_memcached > 60:
+            if len(memcached.cores) == 1 and cpu_usage_memcached > CPU_THRESHOLD_1_CORE:
                 print("Memache 2 core, jobs 2 cores")
                 memcached.update_memcached_cores([0,1])
                 self.update_cores_all_jobs([2,3])
-                self.pause_jobs(LOAD_VARIATION)
-            elif len(memcached.cores) == 2 and cpu_usage_memcached < 100:
+                self.curr_max_load = MAX_LOAD_LOW
+            elif len(memcached.cores) == 2 and cpu_usage_memcached < CPU_THRESHOLD_2_CORES:
                 print("Memache 1 core, jobs 3 cores")
                 memcached.update_memcached_cores([0])
                 self.update_cores_all_jobs([1,2,3])
-                add_load = self.unpause_job(LOAD_VARIATION)
-                if add_load == 0:
-                    self.start_next_job(LOAD_VARIATION)
+                self.curr_max_load = MAX_LOAD_HIGH
 
-            freed_weight = self.finish_jobs()
-            add_load = self.unpause_job(freed_weight)
-            if freed_weight > add_load:
-                self.start_next_job(freed_weight-add_load)
+            # update running jobs such that curr max load is satisfied
+            self.start_pause_unpause_jobs()
 
-            if self.finish_round():
-                print("All jobs have finished.")
+            if self.check_all_jobs_finished():
                 break
-            sleep(1) # TODO find a good interval
+            sleep(SLEEP_TIME)
+
+        self.end_run()
 
 
-memcached = MemcachedProcess([0,1]) # TODO make sure to start memcached with 2 cores
+memcached = MemcachedProcess([])
 if memcached.get_pid() is None:
     print(f"\nUnexpected error. Memcache process is not running. Abort!")
     exit(-1)
 
+# TODO find optimal assignements, add/remove queues if necessary
 scheduler = Scheduler(memcached, 
-                      small_jobs=[RadixJob(), BlackscholesJob()], # TODO find better assignments
+                      small_jobs=[RadixJob(), BlackscholesJob()],
                       medium_jobs=[FreqmineJob(), VipsJob()], 
                       large_jobs=[CannealJob(), DedupJob(), FerretJob()])
 try:
