@@ -29,20 +29,20 @@ gcloud compute scp --scp-flag=-r ../setup/ ubuntu@client-measure-m2ld:/home/ubun
 > gcloud compute ssh --ssh-key-file ~/.ssh/cloud-computing ubuntu@memcache-server-vksf --zone europe-west3-a
 > ./setup/memcache-server-setup.sh
 > sudo vim /etc/memcached.conf # update the file content as described below
-# update line starting with "-m" to "-m 1024"
-# add a new line "-t 2"
-# update line starting with "-l" to "-l 10.0.16.3" [MEMCAHED_INTERNAL_IP]
-# save file and close it
+    # update line starting with "-m" to "-m 1024"
+    # add a new line "-t 2"
+    # update line starting with "-l" to "-l 10.0.16.3" [MEMCAHED_INTERNAL_IP]
+    # save file and close it
 > sudo systemctl restart memcached
-> sudo systemctl status memcached # make sure the changes have been appied
+> sudo systemctl status memcached # make sure the changes have been applied
 
 # experimentName can be freely chosen and will be used in logs and in the result folder name
-> ./run_experiment.sh 10.0.16.3 10.0.16.4 l3m1 m2ld vksf firstTry
+> ./run_experiment.sh 10.0.16.3 10.0.16.4 l3m1 m2ld vksf experimentName
 # when prompted to do so, execute this on memcache-server
 > python3 scheduler/scheduler.py
-# once it finished, make sure that run_experiment.sh finished as well (this saves the log files)
+# once it finished, make sure that run_experiment.sh finishes as well (this saves the log files)
 
-# TODO: copy past scheduler_logger file to local results folder
+# TODO: copy the scheduler_logger file from memcache-server to the local results folder created by run_experiment.sh
 
 NAME                         STATUS   ROLES           AGE     VERSION   INTERNAL-IP   EXTERNAL-IP      OS-IMAGE             KERNEL-VERSION   CONTAINER-RUNTIME
 client-agent-l3m1            Ready    node            45s     v1.28.6   10.0.16.4     35.246.237.32    Ubuntu 22.04.3 LTS   6.5.0-1013-gcp   containerd://1.7.13
