@@ -19,6 +19,8 @@ pip3 install psutil docker
 sudo systemctl status memcached
 sudo usermod -a -G docker ubuntu
 
+echo Exit and restart such that changes can be applied
+
 
 #newgrp docker
 #docker run hello-world

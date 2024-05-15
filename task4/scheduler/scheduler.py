@@ -26,11 +26,13 @@ class BatchJob(object):
     def is_running(self):
         if self.container is None:
             return False
-        return self.container.status in ["running", "restarting"]
+        self.container.reload()
+        return self.container.status in ["created", "running", "restarting"]
 
     def has_finished(self):
         if self.container is None:
             return self.has_finished_
+        self.container.reload()
         return self.container.status in ["exited"] 
     
     def is_newly_finished(self):
@@ -39,15 +41,23 @@ class BatchJob(object):
     def is_paused(self):
         if self.container is None:
             return False
+        self.container.reload()
         return self.container.status in ["paused"] 
     
     def is_new(self):
         return self.container is None and not self.has_finished_
     
+    def reload_stats(self):
+        if self.container is not None:
+            self.container.reload()
+    
     def get_status(self):
         if self.has_finished_:
             return "exited"
-        return "not started" if self.container is None else self.container.status
+        if self.container is None:
+            return "not started"
+        self.container.reload()
+        return self.container.status
 
     def __str__(self):
         return f"{self.name} ({self.image}): \n\tcores = {self.cores}\n\tcommand = {self.command}\n\tstatus = {self.get_status()}" 
@@ -197,6 +207,7 @@ class MemcachedProcess(object):
         self.cores = cores
 
     def get_pid(self):
+        # FIXME: there are 2 processes
         if self.pid is None:
             for proc in psutil.process_iter():
                 if self.process_name in proc.name():
@@ -284,6 +295,10 @@ class Scheduler(object):
         sleep(10)
         self.remove_all_jobs(force=True)
 
+    def reload_all_jobs(self):
+        for j in self.get_all_jobs():
+            j.reload_stats()
+
     # start new job(s) with upper bound on weights
     def start_next_job(self, weight) -> int:
         # TODO find better strategy
@@ -357,6 +372,7 @@ class Scheduler(object):
     def start_pause_unpause_jobs(self):
         # TODO find better strategy
         curr_load = self.get_current_load()
+        print(f"curr_load: {curr_load}, max load: {self.curr_max_load}")
         if curr_load > self.curr_max_load:
             self.pause_job(curr_load-self.curr_max_load)
         elif curr_load < self.curr_max_load:
@@ -371,6 +387,7 @@ class Scheduler(object):
 
         # TODO optimize this strategy, implement other strategies and compare ...
         while True:
+            self.reload_all_jobs()
             if self.check_all_jobs_finished():
                 break
 
@@ -397,8 +414,10 @@ class Scheduler(object):
                 self.curr_max_load = MAX_LOAD_HIGH
 
             # update running jobs such that curr max load is satisfied
+            self.reload_all_jobs()
             self.start_pause_unpause_jobs()
 
+            self.reload_all_jobs()
             if self.check_all_jobs_finished():
                 break
             print("Sleep")
