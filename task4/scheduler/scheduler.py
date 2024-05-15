@@ -6,8 +6,8 @@ import docker
 from time import sleep
 
 # TODO find suitable values for these variables
-MAX_LOAD_LOW = 3 # the max weight of jobs when memcached uses 2 cores
-MAX_LOAD_HIGH = 5 # the max weight of jobs when memcached uses 1 core
+MAX_LOAD_LOW = 2 # the max weight of jobs when memcached uses 2 cores
+MAX_LOAD_HIGH = 4 # the max weight of jobs when memcached uses 1 core
 CPU_THRESHOLD_1_CORE = 60 # CPU utilization threshold for switching from 1 to 2 cores
 CPU_THRESHOLD_2_CORES = 100 # CPU utilization threshold for switching from 2 to 1 core
 SLEEP_TIME = 1 # sleep time between two iterations of the main loop
@@ -140,7 +140,7 @@ class CannealJob(BatchJob):
     num_threads = 2
     image = "anakli/cca:parsec_canneal"
     command = f"./run -a run -S parsec -p canneal -i native -n {num_threads}"
-    weight = 1 # TODO
+    weight = 4 # TODO
 
 class BlackscholesJob(BatchJob):
     name = slogger.Job.BLACKSCHOLES
@@ -161,14 +161,14 @@ class FreqmineJob(BatchJob):
     num_threads = 4
     image = "anakli/cca:parsec_freqmine"
     command = f"./run -a run -S parsec -p freqmine -i native -n {num_threads}"
-    weight = 4 # TODO
+    weight = 2 # TODO
 
 class DedupJob(BatchJob):
     name = slogger.Job.DEDUP
     num_threads = 2
     image = "anakli/cca:parsec_dedup"
     command = f"./run -a run -S parsec -p dedup -i native {num_threads}"
-    weight = 3 # TODO
+    weight = 4 # TODO
 
 class RadixJob(BatchJob):
     name = slogger.Job.RADIX
