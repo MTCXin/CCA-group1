@@ -1,0 +1,54 @@
+echo start scheduler2 run 0
+Welcome to Ubuntu 22.04.3 LTS (GNU/Linux 6.5.0-1013-gcp x86_64)
+
+ * Documentation:  https://help.ubuntu.com
+ * Management:     https://landscape.canonical.com
+ * Support:        https://ubuntu.com/pro
+
+  System information as of Thu May 16 10:26:31 UTC 2024
+
+  System load:  0.5361328125       Processes:                146
+  Usage of /:   7.1% of 123.87GB   Users logged in:          1
+  Memory usage: 2%                 IPv4 address for docker0: 172.17.0.1
+  Swap usage:   0%                 IPv4 address for ens4:    10.0.16.5
+
+
+Expanded Security Maintenance for Applications is not enabled.
+
+84 updates can be applied immediately.
+57 of these updates are standard security updates.
+To see these additional updates run: apt list --upgradable
+
+Enable ESM Apps to receive additional future security updates.
+See https://ubuntu.com/esm or run: sudo pro status
+
+
+*** System restart required ***
+Last login: Thu May 16 10:25:20 2024 from 195.176.112.126
+echo start scheduler2 run 0
+ubuntu@memcache-server-62bj:~$ echo start scheduler2 run 0
+start scheduler2 run 0
+ubuntu@memcache-server-62bj:~$
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
