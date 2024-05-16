@@ -211,6 +211,9 @@ class MemcachedProcess(object):
             logger.update_cores(slogger.Job.MEMCACHED, [str(c) for c in cores])
         self.cores = cores
         return True
+    
+    def __str__(self):
+        return f"memcached: pid = {self.pid}, cores = {self.cores}"
 
 
 class Scheduler(object):
@@ -286,6 +289,7 @@ class Scheduler(object):
             cpu_usage_memcached = sum([cpu_usage[i] for i in memcached.cores]) # TODO: implement memcached CPU utilization
             print(f"CPU utilization = {cpu_usage}")
             print(f"memcached CPU utilization = {cpu_usage_memcached}")
+            print(self.memcached)
 
             job_string = "\n".join([str(j) for j in self.get_all_jobs()])
             print(job_string)
