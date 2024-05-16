@@ -198,7 +198,7 @@ class VipsJob(BatchJob):
 
 
 class MemcachedProcess(object):
-    pid = None
+    pid = []
     cores = 0
     process_name = "memcache"
 
@@ -207,20 +207,20 @@ class MemcachedProcess(object):
         self.cores = cores
 
     def get_pid(self):
-        # FIXME: there are 2 processes
-        if self.pid is None:
+        if len(self.pid) == 0:
             for proc in psutil.process_iter():
                 if self.process_name in proc.name():
-                    self.pid = proc.pid
+                    self.pid.append(proc.pid)
         return self.pid
 
     def update_memcached_cores(self, logger, cores, enable_log=True):
-        if self.pid is None:
+        if len(self.pid) == 0:
             print(f"ERROR: Could not update memcached cores because pid is None")
             return False
-        print(f'Update memcache CPUs to {cores}')
-        command = f'sudo taskset -a -cp {",".join([str(c) for c in cores])} {self.pid}'
-        subprocess.run(command.split(" "), stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+        print(f'Update memcache (pid: {self.pid}) CPUs to {cores}')
+        for pid in self.pid:
+            command = f'sudo taskset -a -cp {",".join([str(c) for c in cores])} {pid}'
+            subprocess.run(command.split(" "), stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
         if enable_log:
             logger.update_cores(slogger.Job.MEMCACHED, [str(c) for c in cores])
         self.cores = cores
@@ -427,8 +427,9 @@ class Scheduler(object):
 
 
 memcached = MemcachedProcess([])
-if memcached.get_pid() is None:
-    print(f"\nUnexpected error. Memcache process is not running. Abort!")
+pids = memcached.get_pid()
+if len(pids) != 2:
+    print(f"\nUnexpected number of memcached processes. Expected 2, found {len(pids)} ({pids}). Abort!")
     exit(-1)
 
 # TODO find optimal assignements, add/remove queues if necessary
