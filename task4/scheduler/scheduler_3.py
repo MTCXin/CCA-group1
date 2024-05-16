@@ -7,8 +7,8 @@ from time import sleep
 
 SLEEP_TIME = 0.5 # TODO: find suitable value or remove sleep
 
-THRESHOLD_HIGH = 140
-THRESHOLD_LOW = 70
+THRESHOLD_HIGH = 130
+THRESHOLD_LOW = 60
 THRESHOLD_LOWER = 30
 TOLERANCE = 10
 
@@ -336,18 +336,14 @@ class Scheduler(object):
     # main method!
     def run(self):
         self.start_run()
-        # only switch between HIGH and LOW load when CPU utilization was "out of bounds" multiple times
-        # -> reducing context switches
-        count_cpu_out_of_bounds = 0 
-
         while True:
             self.reload_all_jobs()
             if self.check_all_jobs_finished():
                 break
 
-            cpu_usage = self.get_cpu_usage()
+            # cpu_usage = self.get_cpu_usage()
             cpu_usage_memcached = self.get_pid_cpu()
-            print(f"CPU utilization = {cpu_usage}")
+            # print(f"CPU utilization = {cpu_usage}")
             print(f"memcached CPU utilization = {cpu_usage_memcached}")
             print(self.memcached)
 
@@ -359,12 +355,12 @@ class Scheduler(object):
                 # run a large and a small job if possible
                 self.ensure_one_job_runs(self.large_jobs)
                 self.ensure_one_job_runs(self.small_jobs)
-            elif cpu_usage < THRESHOLD_LOW:
+            elif cpu_usage_memcached > THRESHOLD_LOWER + TOLERANCE and cpu_usage_memcached < THRESHOLD_LOW:
                 self.update_cores_all_jobs([1,2,3]) # memcached gets 1 dedicated CPU
                 # run a large and a small job if possible
                 self.ensure_one_job_runs(self.large_jobs)
                 self.ensure_one_job_runs(self.small_jobs)
-            elif cpu_usage < THRESHOLD_HIGH:
+            elif cpu_usage_memcached > THRESHOLD_LOW + TOLERANCE and cpu_usage_memcached < THRESHOLD_HIGH:
                 self.update_cores_all_jobs([1,2,3]) # memcached gets 1 dedicated CPU
                 # run only a large job
                 is_running = self.ensure_one_job_runs(self.large_jobs)
@@ -372,7 +368,7 @@ class Scheduler(object):
                     self.ensure_one_job_runs(self.small_jobs)
                 else:
                     self.pause_all_jobs(self.small_jobs)
-            else:
+            elif cpu_usage_memcached > THRESHOLD_HIGH + TOLERANCE:
                 self.update_cores_all_jobs([2,3]) # memcached gets 2 dedicated CPU
                 # run only a large job
                 is_running = self.ensure_one_job_runs(self.large_jobs)
