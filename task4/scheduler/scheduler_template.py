@@ -71,7 +71,7 @@ class BatchJob(object):
                                                detach=True,
                                                auto_remove=False,
                                                image=self.image,
-                                               command=self.command)
+                                               command=self.command)   
         logger.job_start(self.name, [str(c) for c in cpu_set], self.num_threads)
         print(f"Start {self}")
         self.container = container
@@ -119,7 +119,12 @@ class BatchJob(object):
         else:
             try:
                 self.container.reload()
+                result = self.container.wait()
+                exit_code = result["StatusCode"]
                 self.container.remove()
+                if exit_code != 0:
+                    print(f"ERROR: The following container exited with code {exit_code}\n{self}\nContainer stats: {result}")
+                    exit(-1)
                 logger.job_end(self.name)
                 self.container = None
                 self.has_finished_ = True
@@ -275,6 +280,7 @@ class Scheduler(object):
         # TODO: add everything that has to be done before the scheduler starts here
         # start with 2 memcached cores in case there is high load in the beginning
         self.memcached.update_memcached_cores(self.logger, [0,1], enable_log=False)
+        self.get_cpu_usage()
         sleep(2)
         print("Start scheduler")
         self.logger = slogger.SchedulerLogger()
@@ -324,8 +330,8 @@ class Scheduler(object):
 
 memcached = MemcachedProcess([])
 pids = memcached.get_pid()
-if len(pids) != 2:
-    print(f"\nUnexpected number of memcached processes. Expected 2, found {len(pids)} ({pids}). Abort!")
+if len(pids) != 1:
+    print(f"\nUnexpected number of memcached processes. Expected 1, found {len(pids)} ({pids}). Abort!")
     exit(-1)
 
 # TODO: maybe add more queues and distribute jobs among them?
