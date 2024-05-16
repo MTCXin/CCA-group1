@@ -7,6 +7,11 @@ from time import sleep
 
 SLEEP_TIME = 0.5 # TODO: find suitable value or remove sleep
 
+THRESHOLD_HIGH = 140
+THRESHOLD_LOW = 70
+THRESHOLD_LOWER = 30
+TOLERANCE = 10
+
 class BatchJob(object):
     name = ""
     num_threads = 4 # default, can be overriden
@@ -71,7 +76,7 @@ class BatchJob(object):
                                                detach=True,
                                                auto_remove=False,
                                                image=self.image,
-                                               command=self.command)   
+                                               command=self.command)
         logger.job_start(self.name, [str(c) for c in cpu_set], self.num_threads)
         print(f"Start {self}")
         self.container = container
@@ -156,7 +161,7 @@ class BatchJob(object):
 
 class CannealJob(BatchJob):
     name = slogger.Job.CANNEAL
-    num_threads = 2 # TODO
+    num_threads = 4 # TODO
     image = "anakli/cca:parsec_canneal"
     command = f"./run -a run -S parsec -p canneal -i native -n {num_threads}"
 
@@ -180,19 +185,19 @@ class FreqmineJob(BatchJob):
 
 class DedupJob(BatchJob):
     name = slogger.Job.DEDUP
-    num_threads = 2 # TODO
+    num_threads = 4 # TODO
     image = "anakli/cca:parsec_dedup"
     command = f"./run -a run -S parsec -p dedup -i native {num_threads}"
 
 class RadixJob(BatchJob):
     name = slogger.Job.RADIX
-    num_threads = 4 # TODO
+    num_threads = 2 # TODO
     image = "anakli/cca:splash2x_radix"
     command = f"./run -a run -S splash2x -p radix -i native -n {num_threads}"
 
 class VipsJob(BatchJob):
     name = slogger.Job.VIPS
-    num_threads = 4 # TODO
+    num_threads = 2 # TODO
     image = "anakli/cca:parsec_vips"
     command = f"./run -a run -S parsec -p vips -i native -n {num_threads}"
 
@@ -200,7 +205,7 @@ class VipsJob(BatchJob):
 class MemcachedProcess(object):
     pid = []
     cores = 0
-    process_name = "memcached"
+    process_name = "memcache"
 
     def __init__(self, cores):
         self.get_pid()
@@ -234,20 +239,20 @@ class MemcachedProcess(object):
 
 class Scheduler(object):
 
-    def __init__(self, memcached: MemcachedProcess, jobs: list[BatchJob]):
+    def __init__(self, memcached: MemcachedProcess, small_jobs: list[BatchJob], large_jobs: list[BatchJob]):
         self.docker_client = docker.from_env()
         self.logger = None
         self.memcached = memcached
-        self.jobs = jobs
+        self.small_jobs = small_jobs
+        self.large_jobs = large_jobs
         self.memcached.get_pid()
 
     def get_all_jobs(self) -> list[BatchJob]:
-        return self.jobs
-
+        return self.small_jobs + self.large_jobs
+    
     # CPU usage per core
     def get_cpu_usage(self):
         return psutil.cpu_percent(interval=None, percpu=True)
-
     #CPU usage for memcache process
     def get_pid_cpu(self):
         pid = self.memcached.pid[0]
@@ -281,7 +286,6 @@ class Scheduler(object):
 
 
     def start_run(self):
-        # TODO: add everything that has to be done before the scheduler starts here
         # start with 2 memcached cores in case there is high load in the beginning
         self.memcached.update_memcached_cores(self.logger, [0,1], enable_log=False)
         self.get_pid_cpu()
@@ -290,6 +294,8 @@ class Scheduler(object):
         print("Start scheduler")
         self.logger = slogger.SchedulerLogger()
         self.logger.job_start(slogger.Job.MEMCACHED, ["0","1"], 2)
+        self.job_cores = [2,3]
+        self.start_or_unpause_job(self.small_jobs)
 
     def end_run(self):
         self.remove_finished_jobs()
@@ -330,6 +336,9 @@ class Scheduler(object):
     # main method!
     def run(self):
         self.start_run()
+        # only switch between HIGH and LOW load when CPU utilization was "out of bounds" multiple times
+        # -> reducing context switches
+        count_cpu_out_of_bounds = 0 
 
         while True:
             self.reload_all_jobs()
@@ -337,8 +346,7 @@ class Scheduler(object):
                 break
 
             cpu_usage = self.get_cpu_usage()
-            cpu_usage_memcached = sum([cpu_usage[i] for i in memcached.cores]) # TODO: implement memcached CPU utilization
-            cpu_usage_mem_pid = self.get_pid_cpu()
+            cpu_usage_memcached = self.get_pid_cpu()
             print(f"CPU utilization = {cpu_usage}")
             print(f"memcached CPU utilization = {cpu_usage_memcached}")
             print(self.memcached)
@@ -346,8 +354,34 @@ class Scheduler(object):
             job_string = "\n".join([str(j) for j in self.get_all_jobs()])
             print(job_string)
 
-            # TODO: implement scheduler logic here
-
+            if cpu_usage_memcached < THRESHOLD_LOWER:
+                self.update_cores_all_jobs([0,1,2,3])
+                # run a large and a small job if possible
+                self.ensure_one_job_runs(self.large_jobs)
+                self.ensure_one_job_runs(self.small_jobs)
+            elif cpu_usage < THRESHOLD_LOW:
+                self.update_cores_all_jobs([1,2,3]) # memcached gets 1 dedicated CPU
+                # run a large and a small job if possible
+                self.ensure_one_job_runs(self.large_jobs)
+                self.ensure_one_job_runs(self.small_jobs)
+            elif cpu_usage < THRESHOLD_HIGH:
+                self.update_cores_all_jobs([1,2,3]) # memcached gets 1 dedicated CPU
+                # run only a large job
+                is_running = self.ensure_one_job_runs(self.large_jobs)
+                if not is_running:
+                    self.ensure_one_job_runs(self.small_jobs)
+                else:
+                    self.pause_all_jobs(self.small_jobs)
+            else:
+                self.update_cores_all_jobs([2,3]) # memcached gets 2 dedicated CPU
+                # run only a large job
+                is_running = self.ensure_one_job_runs(self.large_jobs)
+                if not is_running:
+                    self.ensure_one_job_runs(self.small_jobs)
+                else:
+                    self.pause_all_jobs(self.small_jobs)
+                
+                
             self.reload_all_jobs()
             if self.check_all_jobs_finished():
                 break
@@ -363,10 +397,9 @@ if len(pids) != 1:
     print(f"\nUnexpected number of memcached processes. Expected 1, found {len(pids)} ({pids}). Abort!")
     exit(-1)
 
-# TODO: maybe add more queues and distribute jobs among them?
 scheduler = Scheduler(memcached, 
-                      jobs=[RadixJob(), BlackscholesJob(), FreqmineJob(), VipsJob(), CannealJob(), DedupJob(), FerretJob()])
-scheduler.remove_all_jobs(force=True) # remove containers if they already exist
+                      small_jobs=[VipsJob(), RadixJob(), BlackscholesJob()],
+                      large_jobs=[DedupJob(), CannealJob() , FerretJob(), FreqmineJob()])
 try:
     scheduler.run()
 except Exception as e:

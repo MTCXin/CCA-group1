@@ -237,6 +237,13 @@ class Scheduler(object):
 
     def get_all_jobs(self) -> list[BatchJob]:
         return self.small_jobs + self.large_jobs
+    
+    #CPU usage for memcache process
+    def get_pid_cpu(self):
+        pid = self.memcached.pid[0]
+        process = psutil.Process(pid)
+        cpu_usage = process.cpu_percent(interval=None)
+        return cpu_usage
 
     # CPU usage per core
     def get_cpu_usage(self):
@@ -268,6 +275,8 @@ class Scheduler(object):
     def start_run(self):
         # start with 2 memcached cores in case there is high load in the beginning
         self.memcached.update_memcached_cores(self.logger, [0,1], enable_log=False)
+        self.get_pid_cpu()
+        self.get_cpu_usage()
         sleep(2)
         print("Start scheduler")
         self.logger = slogger.SchedulerLogger()
@@ -324,7 +333,7 @@ class Scheduler(object):
                 break
 
             cpu_usage = self.get_cpu_usage()
-            cpu_usage_memcached = sum([cpu_usage[i] for i in memcached.cores]) # TODO: implement memcached CPU utilization
+            cpu_usage_memcached = self.get_pid_cpu()
             print(f"CPU utilization = {cpu_usage}")
             print(f"memcached CPU utilization = {cpu_usage_memcached}")
             print(self.memcached)
@@ -332,8 +341,7 @@ class Scheduler(object):
             job_string = "\n".join([str(j) for j in self.get_all_jobs()])
             print(job_string)
 
-            if len(self.memcached.cores) == 1 and (cpu_usage_memcached > THRESHOLD_LOW + THRESHOLD_LOW \
-                                                   or (cpu_usage_memcached > THRESHOLD_LOW and count_cpu_out_of_bounds > 3)):
+            if cpu_usage_memcached > THRESHOLD_LOW + THRESHOLD_LOW or (cpu_usage_memcached > THRESHOLD_LOW and count_cpu_out_of_bounds > 3):
                 self.memcached.update_memcached_cores(self.logger, [0,1])
                 self.update_cores_all_jobs([2,3])
                 count_cpu_out_of_bounds = 0
@@ -379,8 +387,8 @@ if len(pids) != 1:
     exit(-1)
 
 scheduler = Scheduler(memcached, 
-                      small_jobs=[RadixJob(), BlackscholesJob(), VipsJob()],
-                      large_jobs=[CannealJob(), DedupJob(), FerretJob(), FreqmineJob()])
+                      small_jobs=[VipsJob(), RadixJob(), BlackscholesJob()],
+                      large_jobs=[DedupJob(), CannealJob() , FerretJob(), FreqmineJob()])
 try:
     scheduler.run()
 except Exception as e:
