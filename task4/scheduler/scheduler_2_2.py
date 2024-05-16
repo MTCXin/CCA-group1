@@ -5,10 +5,10 @@ import sys
 import docker
 import time
 
-SLEEP_TIME = 0.1 # TODO: find suitable value or remove sleep
+SLEEP_TIME = 0.5 # TODO: find suitable value or remove sleep
 
-THRESHOLD_HIGH = 60
-THRESHOLD_LOW = 40
+THRESHOLD_HIGH = 90
+THRESHOLD_LOW = 60
 TOLERANCE = 10
 
 class BatchJob(object):
@@ -121,13 +121,12 @@ class BatchJob(object):
                 self.container.reload()
                 result = self.container.wait()
                 exit_code = result["StatusCode"]
-                print("Try to remove")
                 self.container.remove()
                 if exit_code != 0:
                     print(f"ERROR: The following container exited with code {exit_code}\n{self}\nContainer stats: {result}")
                     exit(-1)
                 logger.job_end(self.name)
-                logger.custom_event(slogger.Job.SCHEDULER, f"runtime={self.runtime}")
+                logger.custom_event(f"{self.name} runtime={self.runtime}")
                 self.runtime = self.runtime + (time.time() - self.start_time)
                 self.container = None
                 self.has_finished_ = True
@@ -298,7 +297,7 @@ class Scheduler(object):
         runtime = time.time() - self.start_time
         self.remove_finished_jobs()
         self.logger.end()
-        self.logger.custom_event(self.name, f"Total runtime={runtime}s")
+        self.logger.custom_event(f"Total runtime={runtime}s")
         print("All jobs have finished. Force removing all containers in 10s...")
         time.sleep(10)
         self.remove_all_jobs(force=True)
@@ -335,6 +334,9 @@ class Scheduler(object):
     # main method!
     def run(self):
         self.start_run()
+        # only switch between HIGH and LOW load when CPU utilization was "out of bounds" multiple times
+        # -> reducing context switches
+        count_cpu_out_of_bounds = 0 
 
         while True:
             self.reload_all_jobs()
@@ -350,25 +352,34 @@ class Scheduler(object):
             job_string = "\n".join([str(j) for j in self.get_all_jobs()])
             print(job_string)
 
-            if len(self.memcached.cores) == 1 and cpu_usage_memcached > THRESHOLD_LOW:
+            if cpu_usage_memcached > THRESHOLD_LOW + THRESHOLD_LOW or (cpu_usage_memcached > THRESHOLD_LOW and count_cpu_out_of_bounds > 3):
                 self.memcached.update_memcached_cores(self.logger, [0,1])
                 self.update_cores_all_jobs([2,3])
-            elif len(self.memcached.cores) == 2 and cpu_usage_memcached < THRESHOLD_HIGH:
+                count_cpu_out_of_bounds = 0
+            elif len(self.memcached.cores) == 2 and (cpu_usage_memcached < THRESHOLD_HIGH - THRESHOLD_LOW \
+                                                   or (cpu_usage_memcached < THRESHOLD_HIGH and count_cpu_out_of_bounds > 3)):
                 self.memcached.update_memcached_cores(self.logger, [0])
                 self.update_cores_all_jobs([1,2,3])
+                count_cpu_out_of_bounds = 0
+            elif len(self.memcached.cores) == 2 and cpu_usage_memcached < THRESHOLD_HIGH:
+                count_cpu_out_of_bounds = count_cpu_out_of_bounds + 1
+            elif len(self.memcached.cores) == 1 and cpu_usage_memcached > THRESHOLD_LOW:
+                count_cpu_out_of_bounds = count_cpu_out_of_bounds + 1
+            else:
+                count_cpu_out_of_bounds = 0
                 
 
             if len(self.memcached.cores) == 1:
                 # run a large and a small job if possible
+                self.ensure_one_job_runs(self.large_jobs)
+                self.ensure_one_job_runs(self.small_jobs)
+            elif len(self.memcached.cores) == 2:
+                # run only a small job
                 is_running = self.ensure_one_job_runs(self.large_jobs)
                 if not is_running:
                     self.ensure_one_job_runs(self.small_jobs)
                 else:
-                    # self.ensure_one_job_runs(self.small_jobs)
                     self.pause_all_jobs(self.small_jobs)
-            elif len(self.memcached.cores) == 2:
-                self.ensure_one_job_runs(self.small_jobs)
-                self.pause_all_jobs(self.large_jobs)
                 
                 
             self.reload_all_jobs()
@@ -387,8 +398,8 @@ if len(pids) != 1:
     exit(-1)
 
 scheduler = Scheduler(memcached, 
-                      small_jobs=[CannealJob(), VipsJob(), BlackscholesJob()],
-                      large_jobs=[RadixJob(), DedupJob(), FerretJob(), FreqmineJob()])
+                      small_jobs=[VipsJob(), RadixJob(), BlackscholesJob()],
+                      large_jobs=[DedupJob(), CannealJob() , FerretJob(), FreqmineJob()])
 try:
     scheduler.run()
 except Exception as e:
