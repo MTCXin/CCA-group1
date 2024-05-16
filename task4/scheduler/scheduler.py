@@ -59,6 +59,15 @@ class BatchJob(object):
         self.container.reload()
         return self.container.status
 
+    def get_cpu_usage(self):
+        stats = self.container.stats(stream=False)
+        cpu_stats = stats['cpu_stats']
+        cpu_usage = cpu_stats['cpu_usage']
+        total_usage = cpu_usage['total_usage']
+        system_cpu_usage = cpu_stats['system_cpu_usage']
+        cpu_percent = (total_usage / system_cpu_usage) * 100
+        return cpu_percent
+
     def __str__(self):
         return f"{self.name} ({self.image}): \n\tcores = {self.cores}\n\tcommand = {self.command}\n\tstatus = {self.get_status()}" 
 
@@ -205,6 +214,7 @@ class MemcachedProcess(object):
     def __init__(self, cores):
         self.get_pid()
         self.cores = cores
+        self.pids = []
 
     def get_pid(self):
         if len(self.pid) == 0:
@@ -212,6 +222,34 @@ class MemcachedProcess(object):
                 if self.process_name in proc.name():
                     self.pid.append(proc.pid)
         return self.pid
+
+    def get_memcache_pids(self):
+        # Call the pgrep command and capture its output
+        pgrep_process = subprocess.Popen(["pgrep", "memcache"], stdout=subprocess.PIPE)
+        output, _ = pgrep_process.communicate()
+
+        # Split the output into a list of lines and convert to integers
+        self.pids = [int(pid) for pid in output.decode().strip().split('\n')]
+
+        return self.pids
+
+    def calculate_cpu_usage(self):
+        total_cpu_usage = 0.0
+
+        # Iterate over each process PID
+        for pid in self.pids:
+            try:
+                # Use psutil to get the CPU usage of the process
+                process = psutil.Process(pid)
+                cpu_usage = process.cpu_percent()
+
+                # Accumulate CPU usage
+                total_cpu_usage += cpu_usage
+            except psutil.NoSuchProcess:
+                # Handle the case where the process does not exist
+                pass
+
+        return total_cpu_usage
 
     def update_memcached_cores(self, logger, cores, enable_log=True):
         if len(self.pid) == 0:

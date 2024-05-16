@@ -52,6 +52,15 @@ class BatchJob(object):
         self.container.reload()
         return self.container.status
 
+    def get_cpu_usage(self):
+        stats = self.container.stats(stream=False)
+        cpu_stats = stats['cpu_stats']
+        cpu_usage = cpu_stats['cpu_usage']
+        total_usage = cpu_usage['total_usage']
+        system_cpu_usage = cpu_stats['system_cpu_usage']
+        cpu_percent = (total_usage / system_cpu_usage) * 100
+        return cpu_percent
+
     def __str__(self):
         return f"{self.name} ({self.image}): \n\tcores = {self.cores}\n\tcommand = {self.command}\n\tstatus = {self.get_status()}" 
 
@@ -186,7 +195,7 @@ class VipsJob(BatchJob):
 class MemcachedProcess(object):
     pid = []
     cores = 0
-    process_name = "memcache"
+    process_name = "memcached"
 
     def __init__(self, cores):
         self.get_pid()
@@ -231,6 +240,13 @@ class Scheduler(object):
     # CPU usage per core
     def get_cpu_usage(self):
         return psutil.cpu_percent(interval=None, percpu=True)
+
+    #CPU usage for memcache process
+    def get_pid_cpu(self):
+        pid = self.memcached.pid[0]
+        process = psutil.Process(pid)
+        cpu_usage = process.cpu_percent(interval=None)
+        return cpu_usage
     
     def check_all_jobs_finished(self):
         return all(j.has_finished() for j in self.get_all_jobs())
@@ -287,6 +303,7 @@ class Scheduler(object):
 
             cpu_usage = self.get_cpu_usage()
             cpu_usage_memcached = sum([cpu_usage[i] for i in memcached.cores]) # TODO: implement memcached CPU utilization
+            cpu_usage_mem_pid = self.get_pid_cpu()
             print(f"CPU utilization = {cpu_usage}")
             print(f"memcached CPU utilization = {cpu_usage_memcached}")
             print(self.memcached)
