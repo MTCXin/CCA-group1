@@ -340,7 +340,7 @@ class Scheduler(object):
             cpu_usage_memcached = sum([cpu_usage[i] for i in memcached.cores]) # TODO: implement memcached CPU utilization
             cpu_usage_mem_pid = self.get_pid_cpu()
             print(f"CPU utilization = {cpu_usage}")
-            print(f"memcached CPU utilization = {cpu_usage_memcached}")
+            print(f"memcached CPU utilization = {cpu_usage_mem_pid}")
             print(self.memcached)
 
             job_string = "\n".join([str(j) for j in self.get_all_jobs()])
