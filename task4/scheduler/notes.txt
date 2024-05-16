@@ -1,0 +1,10 @@
+
+
+- freqmine, ferret 
+    - heavy jobs. when run on 3 dedicated cores, the cpu utilization of all 3 cores is always 100% 
+    -> they should not run simoultaneously to another job 
+
+- dedub, canneal
+    - medium
+
+- blackscholes, radix, vips
