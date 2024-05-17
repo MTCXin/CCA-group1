@@ -23,7 +23,8 @@ import time
 
 SLEEP_TIME = 0.2 # TODO: find suitable value or remove sleep
 
-THRESHOLD = 50
+THRESHOLD_HIGH = 25
+THRESHOLD_LOW = 15
 # TOLERANCE = 10
 
 class BatchJob(object):
@@ -232,6 +233,8 @@ class MemcachedProcess(object):
         return self.pid
 
     def update_memcached_cores(self, logger, cores, enable_log=True):
+        if cores == self.cores:
+            return
         if len(self.pid) == 0:
             print(f"ERROR: Could not update memcached cores because pid is None")
             return False
@@ -286,6 +289,8 @@ class Scheduler(object):
             print(f"{job.name} - {job.get_status()}")
 
     def update_cores_all_jobs(self, cpu_set):
+        if cpu_set == self.job_cores:
+            return
         self.job_cores = cpu_set
         for job in self.get_all_jobs():
             job.update_cores(cpu_set, self.logger)
@@ -321,6 +326,9 @@ class Scheduler(object):
         for j in self.get_all_jobs():
             j.reload_stats()
 
+    def can_run_one_job(self, jobs: list[BatchJob]) -> bool:
+        return len([j for j in jobs if j.is_running() or j.is_new() or j.is_paused()]) > 0
+
     def ensure_one_job_runs(self, jobs: list[BatchJob]):
         running_jobs = [j for j in jobs if j.is_running()]
         if len(running_jobs) == 0:
@@ -350,12 +358,15 @@ class Scheduler(object):
     def run(self):
         self.start_run()
 
+        keep_on_high = 3 # avoid switching too quickly
+
         while True:
             self.reload_all_jobs()
             if self.check_all_jobs_finished():
                 break
 
             self.remove_finished_jobs()
+            keep_on_high = keep_on_high - 1
 
             cpu_usage = self.get_cpu_usage()
             cpu_usage_memcached = sum([cpu_usage[i] for i in memcached.cores])
@@ -366,26 +377,30 @@ class Scheduler(object):
             job_string = "\n".join([str(j) for j in self.get_all_jobs()])
             print(job_string)
 
-            if len(self.memcached.cores) == 1 and cpu_usage_memcached > THRESHOLD:
-                self.memcached.update_memcached_cores(self.logger, [0,1])
-                self.update_cores_all_jobs([2,3])
-            elif len(self.memcached.cores) == 2 and cpu_usage_memcached < THRESHOLD:
-                self.memcached.update_memcached_cores(self.logger, [0])
-                self.update_cores_all_jobs([1,2,3])
-                
+            if cpu_usage_memcached > THRESHOLD_HIGH:
+                if len(self.memcached.cores) < 2:
+                    self.memcached.update_memcached_cores(self.logger, [0,1])
+                    self.update_cores_all_jobs([2,3])
+                    keep_on_high = 5
+            elif cpu_usage_memcached < THRESHOLD_LOW:
+                if keep_on_high < 0 and len(self.memcached.cores) > 1:
+                    self.memcached.update_memcached_cores(self.logger, [0])
+                    self.update_cores_all_jobs([1,2,3])
 
             if len(self.memcached.cores) == 1:
-                # run only a large job if possible, otherwise run a small job
-                is_running = self.ensure_one_job_runs(self.large_jobs)
-                if not is_running:
-                    self.ensure_one_job_runs(self.small_jobs)
-                else:
+                # run a large job if possible, otherwise run a small job
+                if self.can_run_one_job(self.large_jobs):
                     self.pause_all_jobs(self.small_jobs)
+                    time.sleep(0.1)
+                    self.ensure_one_job_runs(self.large_jobs) 
+                else:
+                    self.ensure_one_job_runs(self.small_jobs)
+                    
             elif len(self.memcached.cores) == 2:
                 # only run a small job
-                self.ensure_one_job_runs(self.small_jobs)
                 self.pause_all_jobs(self.large_jobs)
-                
+                time.sleep(0.1)
+                self.ensure_one_job_runs(self.small_jobs)
                 
             self.reload_all_jobs()
             if self.check_all_jobs_finished():
@@ -403,8 +418,8 @@ if len(pids) != 1:
     exit(-1)
 
 scheduler = Scheduler(memcached, 
-                      small_jobs=[BlackscholesJob(), RadixJob(), VipsJob(), FreqmineJob()],
-                      large_jobs=[FerretJob(), DedupJob(), CannealJob()])
+                      small_jobs=[BlackscholesJob(), RadixJob(), VipsJob(), CannealJob(), FreqmineJob()],
+                      large_jobs=[FerretJob(), DedupJob()])
                     #   small_jobs=[BlackscholesJob(), RadixJob(), CannealJob(), VipsJob(), DedupJob()],
                     #   large_jobs=[FerretJob(), FreqmineJob()])
 try:
