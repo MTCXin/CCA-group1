@@ -61,9 +61,7 @@ for measure in measures[4:]:
         qps.append(float(parts[16]))
 
 # align
-time_axis = [scheduler_start_time + datetime.timedelta(seconds=i * interval_duration) for i in range(intervals)]
-
-#time_axis = [datetime.datetime.fromtimestamp(timestamp_start/1000.0)-datetime.timedelta(hours=2) + datetime.timedelta(seconds=i * interval_duration) for i in range(intervals)]
+time_axis = [datetime.datetime.fromtimestamp(timestamp_start/1000.0)-datetime.timedelta(hours=2) + datetime.timedelta(seconds=i * interval_duration) for i in range(intervals)]
 
 time_axis_start_time = scheduler_start_time
 time_axis_end_time = scheduler_end_time

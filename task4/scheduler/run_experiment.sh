@@ -31,7 +31,7 @@ tmux send-keys -t measure "cd memcache-perf-dynamic" C-m
 tmux send-keys -t client "./mcperf -T 16 -A" C-m
 
 tmux send-keys -t measure "./mcperf -s $INTERNAL_MEMCACHED_IP --loadonly" C-m
-tmux send-keys -t measure "./mcperf -s $INTERNAL_MEMCACHED_IP -a $INTERNAL_AGENT_IP --noload -T 16 -C 4 -D 4 -Q 1000 -c 4 -t 900 --qps_interval 5 --qps_min 5000 --qps_max 100000 --qps_seed 3274" C-m
+tmux send-keys -t measure "./mcperf -s $INTERNAL_MEMCACHED_IP -a $INTERNAL_AGENT_IP --noload -T 16 -C 4 -D 4 -Q 1000 -c 4 -t 900 --qps_interval 10 --qps_min 5000 --qps_max 100000 --qps_seed 3274" C-m
 
 sleep 20 # make sure memcached started up properly
 echo You can now start the scheduler.py on the server. 
