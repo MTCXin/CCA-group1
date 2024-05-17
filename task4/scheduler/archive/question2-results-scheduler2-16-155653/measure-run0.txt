@@ -1,0 +1,75 @@
+echo start scheduler2 run 0
+cd memcache-perf-dynamic
+./mcperf -s 10.0.16.5 --loadonly
+./mcperf -s 10.0.16.5 -a 10.0.16.3 --noload -T 16 -C 4 -D 4 -Q 1000 -c 4 -t 120 --qps_interval 10 --qps_min 5000 --qps_max 100000 --qps_seed 3274
+Welcome to Ubuntu 22.04.3 LTS (GNU/Linux 6.5.0-1013-gcp x86_64)
+
+ * Documentation:  https://help.ubuntu.com
+ * Management:     https://landscape.canonical.com
+ * Support:        https://ubuntu.com/pro
+
+  System information as of Thu May 16 13:39:55 UTC 2024
+
+  System load:  0.02978515625      Users logged in:               0
+  Usage of /:   4.1% of 123.87GB   IPv4 address for ens4:         10.0.16.4
+  Memory usage: 6%                 IPv4 address for vetha88f5f9f: 100.96.1.1
+  Swap usage:   0%                 IPv4 address for vethffb6fbc6: 100.96.1.1
+  Processes:    127
+
+ * Strictly confined Kubernetes makes edge and IoT secure. Learn how MicroK8s
+   just raised the bar for easy, resilient and secure K8s cluster deployment.
+
+   https://ubuntu.com/engage/secure-kubernetes-at-the-edge
+
+Expanded Security Maintenance for Applications is not enabled.
+
+86 updates can be applied immediately.
+59 of these updates are standard security updates.
+To see these additional updates run: apt list --upgradable
+
+Enable ESM Apps to receive additional future security updates.
+See https://ubuntu.com/esm or run: sudo pro status
+
+
+*** System restart required ***
+Last login: Thu May 16 13:45:05 2024 from 195.176.112.78
+echo start scheduler2 run 0
+cd memcache-perf-dynamic
+./mcperf -s 10.0.16.5 --loadonly
+./mcperf -s 10.0.16.5 -a 10.0.16.3 --noload -T 16 -C 4 -D 4 -Q 1000 -c 4 -t 120 --qps_interval 10 --qps_min 5000 --qps_max 100000 --qps_seed 3274
+ubuntu@client-measure-0r2f:~$ echo start scheduler2 run 0
+start scheduler2 run 0
+ubuntu@client-measure-0r2f:~$ cd memcache-perf-dynamic
+ubuntu@client-measure-0r2f:~/memcache-perf-dynamic$ ./mcperf -s 10.0.16.5 --loadonly
+ubuntu@client-measure-0r2f:~/memcache-perf-dynamic$ ./mcperf -s 10.0.16.5 -a 10.0.16.3 --noload -T 16 -C 4 -D 4 -Q 1000 -c 4 -t 120 --qps_interval 10 --qps_min 5000 --qps_max 100000 --qps_seed 3274
+Random waveform, supplied seed
+Total number of intervals = 12 (7434, 67201, 85927, 63953, 31595, 87879, 7287, 62295, 6561, 22532, 60653, 59076)
+Average QPS expected = 46866
+Timestamp start: 1715867821418
+Timestamp end: 1715867941876
+
+#type       avg     std     min      p5     p10     p50     p67     p75     p80     p85     p90     p95     p99    p999   p9999      QPS   target
+read      393.7  1456.0    74.4   125.6   149.0   268.9   311.8   337.0   356.7   381.2   415.8   483.2  2257.8 29598.1 39758.9   7393.9     7434
+read      452.6   743.3    68.9   126.2   147.2   302.3   382.8   439.7   488.9   560.6   736.9  1564.0  2392.8  9034.0 30095.8  67335.7    67201
+read      519.1   566.6    68.9   143.1   175.8   359.4   448.9   532.3   605.7   703.5  1340.3  1677.0  2166.6  4223.9 16064.9  85896.0    85927
+read      424.8   567.4    63.8   119.0   136.9   272.9   349.8   403.5   451.5   522.8   843.0  1663.8  2138.6  4411.1 17773.3  63841.1    63953
+read      400.6   393.2    68.9   121.8   140.5   288.8   388.6   501.0   648.6   766.9   868.0   987.6  1181.3  2210.0 11851.8  31512.9    31595
+read      781.0   800.9    68.9   178.8   233.8   417.5   714.6  1409.1  1512.5  1608.7  1735.4  1912.7  2769.3  7711.9 21640.5  87735.1    87879
+read      289.7   385.0    68.9   120.3   139.1   261.5   302.3   323.7   340.4   360.7   388.9   446.2  1016.2  5795.6 16496.0   7306.2     7287
+read      411.3   473.6    63.8   116.4   133.3   265.6   340.5   393.3   438.9   506.4   956.5  1635.1  2033.6  2513.8  9483.1  62324.9    62295
+read      286.4   378.5    74.4   132.9   156.6   267.4   302.9   321.2   335.7   351.7   372.9   413.2   564.9  6532.1 13756.6   6558.8     6561
+read      377.1   321.4    63.8   123.4   141.9   302.0   421.2   521.9   584.8   644.8   711.5   800.0   971.2  1929.4 11849.1  22496.5    22532
+read      411.5   476.4    63.8   115.8   132.5   266.0   341.5   394.6   440.0   508.2  1012.6  1623.5  2033.0  2485.1 11347.1  60508.4    60653
+read      409.0   483.5    63.8   113.9   129.9   262.5   336.6   387.3   430.4   495.2  1147.2  1639.2  2008.6  2458.2 10693.6  58943.2    59076
+
+Total QPS = 46821.1 (5618527 / 120.0s)
+
+Total connections = 64
+Misses = 0 (0.0%)
+Skipped TXs = 0 (0.0%)
+
+RX 1387776169 bytes :   11.0 MB/s
+TX          0 bytes :    0.0 MB/s
+Warning! Detected max cpu usage > 95%
+CPU Usage Stats (avg/min/max): 99.90%,50.25%,100.00%
+ubuntu@client-measure-0r2f:~/memcache-perf-dynamic$

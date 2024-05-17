@@ -1,0 +1,54 @@
+echo start experimentName run 0
+cd memcache-perf-dynamic
+./mcperf -T 16 -A
+Welcome to Ubuntu 22.04.3 LTS (GNU/Linux 6.5.0-1013-gcp x86_64)
+
+ * Documentation:  https://help.ubuntu.com
+ * Management:     https://landscape.canonical.com
+ * Support:        https://ubuntu.com/pro
+
+  System information as of Wed May 15 15:06:49 UTC 2024
+
+  System load:  0.0458984375       Users logged in:               0
+  Usage of /:   4.1% of 123.87GB   IPv4 address for ens4:         10.0.16.3
+  Memory usage: 1%                 IPv4 address for veth19b59794: 100.96.1.1
+  Swap usage:   0%                 IPv4 address for veth42f5cbba: 100.96.1.1
+  Processes:    240                IPv4 address for veth8ad95fbf: 100.96.1.1
+
+
+Expanded Security Maintenance for Applications is not enabled.
+
+85 updates can be applied immediately.
+58 of these updates are standard security updates.
+To see these additional updates run: apt list --upgradable
+
+Enable ESM Apps to receive additional future security updates.
+See https://ubuntu.com/esm or run: sudo pro status
+
+
+*** System restart required ***
+Last login: Wed May 15 14:28:23 2024 from 195.176.112.43
+echo start experimentName run 0
+cd memcache-perf-dynamic
+./mcperf -T 16 -A
+ubuntu@client-agent-b9zq:~$ echo start experimentName run 0
+start experimentName run 0
+ubuntu@client-agent-b9zq:~$ cd memcache-perf-dynamic
+ubuntu@client-agent-b9zq:~/memcache-perf-dynamic$ ./mcperf -T 16 -A
+Connection.cc(489): BEV_EVENT_ERROR for 10.0.16.43:11211 : Connection timed out
+Connection.cc(489): BEV_EVENT_ERROR for 10.0.16.43:11211 : Connection timed out
+Connection.cc(489): BEV_EVENT_ERROR for 10.0.16.43:11211 : Connection timed out
+Connection.cc(489): BEV_EVENT_ERROR for 10.0.16.43:11211 : Connection timed out
+Connection.cc(489): BEV_EVENT_ERROR for 10.0.16.43:11211 : Connection timed out
+ubuntu@client-agent-b9zq:~/memcache-perf-dynamic$
+
+
+
+
+
+
+
+
+
+
+

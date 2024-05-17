@@ -1,0 +1,54 @@
+echo start scheduler2 run 0
+cd memcache-perf-dynamic
+./mcperf -T 16 -A
+Welcome to Ubuntu 22.04.3 LTS (GNU/Linux 6.5.0-1013-gcp x86_64)
+
+ * Documentation:  https://help.ubuntu.com
+ * Management:     https://landscape.canonical.com
+ * Support:        https://ubuntu.com/pro
+
+  System information as of Thu May 16 13:56:57 UTC 2024
+
+  System load:  14.720703125       Processes:                     233
+  Usage of /:   4.2% of 123.87GB   Users logged in:               0
+  Memory usage: 1%                 IPv4 address for ens4:         10.0.16.3
+  Swap usage:   0%                 IPv4 address for veth2d93ae85: 100.96.2.1
+
+ * Strictly confined Kubernetes makes edge and IoT secure. Learn how MicroK8s
+   just raised the bar for easy, resilient and secure K8s cluster deployment.
+
+   https://ubuntu.com/engage/secure-kubernetes-at-the-edge
+
+Expanded Security Maintenance for Applications is not enabled.
+
+86 updates can be applied immediately.
+59 of these updates are standard security updates.
+To see these additional updates run: apt list --upgradable
+
+Enable ESM Apps to receive additional future security updates.
+See https://ubuntu.com/esm or run: sudo pro status
+
+
+*** System restart required ***
+Last login: Thu May 16 13:45:05 2024 from 195.176.112.78
+echo start scheduler2 run 0
+cd memcache-perf-dynamic
+./mcperf -T 16 -A
+ubuntu@client-agent-zt6m:~$ echo start scheduler2 run 0
+start scheduler2 run 0
+ubuntu@client-agent-zt6m:~$ cd memcache-perf-dynamic
+ubuntu@client-agent-zt6m:~/memcache-perf-dynamic$ ./mcperf -T 16 -A
+Local QPS = 45820.6 (5498473 / 120.0s) - 5498473.0, 0.0
+#type       avg     std     min      p5     p10     p50     p67     p75     p80     p85     p90     p95     p99    p999   p9999 QPS
+read      327.4   742.1    74.4   122.3   142.8   255.8   297.4   323.6   344.2   370.4   403.3   461.8  1457.6 12946.8 15568.6  45820.6
+
+
+
+
+
+
+
+
+
+
+
