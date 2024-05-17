@@ -356,33 +356,7 @@ class Scheduler(object):
             job_string = "\n".join([str(j) for j in self.get_all_jobs()])
             print(job_string)
 
-            if cpu_usage_memcached < THRESHOLD_LOWER:
-                self.update_cores_all_jobs([0,1,2,3])
-                # run a large and a small job if possible
-                self.ensure_one_job_runs(self.large_jobs)
-                self.ensure_one_job_runs(self.small_jobs)
-            elif cpu_usage_memcached > THRESHOLD_LOWER + TOLERANCE and cpu_usage_memcached < THRESHOLD_LOW:
-                self.update_cores_all_jobs([1,2,3]) # memcached gets 1 dedicated CPU
-                # run a large and a small job if possible
-                self.ensure_one_job_runs(self.large_jobs)
-                self.ensure_one_job_runs(self.small_jobs)
-            elif cpu_usage_memcached > THRESHOLD_LOW + TOLERANCE and cpu_usage_memcached < THRESHOLD_HIGH:
-                self.update_cores_all_jobs([1,2,3]) # memcached gets 1 dedicated CPU
-                # run only a large job
-                is_running = self.ensure_one_job_runs(self.large_jobs)
-                if not is_running:
-                    self.ensure_one_job_runs(self.small_jobs)
-                else:
-                    self.pause_all_jobs(self.small_jobs)
-            elif cpu_usage_memcached > THRESHOLD_HIGH + TOLERANCE:
-                self.update_cores_all_jobs([2,3]) # memcached gets 2 dedicated CPU
-                # run only a large job
-                is_running = self.ensure_one_job_runs(self.large_jobs)
-                if not is_running:
-                    self.ensure_one_job_runs(self.small_jobs)
-                else:
-                    self.pause_all_jobs(self.small_jobs)
-                
+            # TODO: implement scheduler logic here
                 
             self.reload_all_jobs()
             if self.check_all_jobs_finished():
