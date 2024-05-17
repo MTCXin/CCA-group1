@@ -368,9 +368,11 @@ class Scheduler(object):
             self.remove_finished_jobs()
             keep_on_high = keep_on_high - 1
 
-            cpu_usage = self.get_cpu_usage()
-            cpu_usage_memcached = sum([cpu_usage[i] for i in memcached.cores])
-            print(f"CPU utilization = {cpu_usage}")
+            pid = self.memcached.pid[0]
+            process = psutil.Process(pid)
+            process.cpu_percent(interval=None)
+            time.sleep(1)
+            cpu_usage_memcached = process.cpu_percent(interval=None)
             print(f"memcached CPU utilization = {cpu_usage_memcached}")
             print(self.memcached)
 
