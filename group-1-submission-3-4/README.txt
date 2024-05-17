@@ -2,6 +2,8 @@
 # These are the instructions to run part 4.3 and 4.4
 # Note that scheduler_logger.py was provided by the course organizers and we did not modify it
 
+# NOTE: part_4_4_results_group_001 contains the results for running with 5s interval
+
 
 > export KOPS_STATE_STORE=<your-gcp-state-store>
 > PROJECT='gcloud config get-value project'
@@ -46,3 +48,4 @@
 
 # copy the scheduler log file to the results folder created by run_experiment.sh
 gcloud compute scp --scp-flag=-r ubuntu@memcache-server-[SERVER_NAME]:/home/ubuntu/log[TIMESTAMP].txt jobs.txt --zone europe-west3-a
+
