@@ -23,7 +23,8 @@ import time
 
 SLEEP_TIME = 0.2 # TODO: find suitable value or remove sleep
 
-THRESHOLD = 50
+THRESHOLD_HIGH = 60 # 70
+THRESHOLD_LOW = 70  # 60p
 # TOLERANCE = 10
 
 class BatchJob(object):
@@ -366,10 +367,10 @@ class Scheduler(object):
             job_string = "\n".join([str(j) for j in self.get_all_jobs()])
             print(job_string)
 
-            if len(self.memcached.cores) == 1 and cpu_usage_memcached > THRESHOLD:
+            if len(self.memcached.cores) == 1 and cpu_usage_memcached > THRESHOLD_LOW:
                 self.memcached.update_memcached_cores(self.logger, [0,1])
                 self.update_cores_all_jobs([2,3])
-            elif len(self.memcached.cores) == 2 and cpu_usage_memcached < THRESHOLD:
+            elif len(self.memcached.cores) == 2 and cpu_usage_memcached < THRESHOLD_HIGH:
                 self.memcached.update_memcached_cores(self.logger, [0])
                 self.update_cores_all_jobs([1,2,3])
                 
@@ -390,7 +391,6 @@ class Scheduler(object):
             self.reload_all_jobs()
             if self.check_all_jobs_finished():
                 break
-            self.get_cpu_usage()
             time.sleep(SLEEP_TIME)
 
         self.end_run()
@@ -403,10 +403,8 @@ if len(pids) != 1:
     exit(-1)
 
 scheduler = Scheduler(memcached, 
-                      small_jobs=[BlackscholesJob(), RadixJob(), VipsJob(), FreqmineJob()],
-                      large_jobs=[FerretJob(), DedupJob(), CannealJob()])
-                    #   small_jobs=[BlackscholesJob(), RadixJob(), CannealJob(), VipsJob(), DedupJob()],
-                    #   large_jobs=[FerretJob(), FreqmineJob()])
+                      small_jobs=[BlackscholesJob(), RadixJob(), CannealJob(), VipsJob(), DedupJob()],
+                      large_jobs=[FerretJob(), FreqmineJob()])
 try:
     scheduler.run()
 except Exception as e:

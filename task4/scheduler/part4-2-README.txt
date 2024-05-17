@@ -8,13 +8,17 @@
 
 > ./../setup/start-cluster.sh
 
-> kubectl get nodes -o wide # to get names and IPs
+# to get names and IPs
+> kubectl get nodes -o wide 
 
 # upload setup scripts
 gcloud compute scp --scp-flag=-r ../setup/ ubuntu@memcache-server-62bj:/home/ubuntu/ --zone europe-west3-a
 gcloud compute scp --scp-flag=-r ../scheduler/ ubuntu@memcache-server-62bj:/home/ubuntu/ --zone europe-west3-a
 gcloud compute scp --scp-flag=-r ../setup/ ubuntu@client-agent-zt6m:/home/ubuntu/ --zone europe-west3-a
 gcloud compute scp --scp-flag=-r ../setup/ ubuntu@client-measure-0r2f:/home/ubuntu/ --zone europe-west3-a
+
+gcloud compute scp --scp-flag=-r scheduler_2.py ubuntu@memcache-server-62bj:/home/ubuntu/scheduler/scheduler_2.py --zone europe-west3-a
+gcloud compute scp --scp-flag=-r ubuntu@memcache-server-62bj:/home/ubuntu/log20240517_064541.txt log.txt --zone europe-west3-a
 
 # connecting to machine template
 > gcloud compute ssh --ssh-key-file ~/.ssh/cloud-computing ubuntu@<MACHINE_NAME> --zone europe-west3-a
@@ -40,9 +44,10 @@ gcloud compute scp --scp-flag=-r ../setup/ ubuntu@client-measure-0r2f:/home/ubun
 > ./run_experiment.sh 10.0.16.5 10.0.16.3 zt6m 0r2f 62bj scheduler2
 # when prompted to do so, execute this on memcache-server
 > python3 scheduler/scheduler.py
-# once it finished, make sure that run_experiment.sh finishes as well (this saves the log files)
+# wait until run_experiment.sh (don't kill it otherwise the logs from measure are lost!!)
 
-# TODO: copy the scheduler_logger file from memcache-server to the local results folder created by run_experiment.sh
+# copy the scheduler log file to the results folder created by run_experiment.sh
+gcloud compute scp --scp-flag=-r ubuntu@memcache-server-62bj:/home/ubuntu/log20240517_064541.txt log.txt --zone europe-west3-a
 
 NAME                         STATUS   ROLES           AGE     VERSION   INTERNAL-IP   EXTERNAL-IP      OS-IMAGE             KERNEL-VERSION   CONTAINER-RUNTIME
 client-agent-zt6m            Ready    node            29s     v1.28.6   10.0.16.3     35.234.125.174   Ubuntu 22.04.3 LTS   6.5.0-1013-gcp   containerd://1.7.13
