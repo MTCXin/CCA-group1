@@ -341,9 +341,9 @@ class Scheduler(object):
             if self.check_all_jobs_finished():
                 break
 
-            cpu_usage = self.get_cpu_usage()
-            cpu_usage_memcached = sum([cpu_usage[i] for i in memcached.cores])
-            print(f"CPU utilization = {cpu_usage}")
+            # cpu_usage = self.get_cpu_usage()
+            cpu_usage_memcached = self.get_pid_cpu()
+            # print(f"CPU utilization = {cpu_usage}")
             print(f"memcached CPU utilization = {cpu_usage_memcached}")
             print(self.memcached)
 

@@ -342,7 +342,13 @@ class Scheduler(object):
                 break
 
             # cpu_usage = self.get_cpu_usage()
-            cpu_usage_memcached = self.get_pid_cpu()
+            pid = self.memcached.pid[0]
+            process = psutil.Process(pid)
+            process.cpu_percent(interval=None)
+            # self.get_pid_cpu()
+            sleep(1)
+            cpu_usage_memcached = process.cpu_percent(interval=None)
+            # cpu_usage_memcached = self.get_pid_cpu()
             # print(f"CPU utilization = {cpu_usage}")
             print(f"memcached CPU utilization = {cpu_usage_memcached}")
             print(self.memcached)
