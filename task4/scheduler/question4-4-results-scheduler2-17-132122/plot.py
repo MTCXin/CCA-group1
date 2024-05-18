@@ -61,10 +61,16 @@ for measure in measures[4:]:
         qps.append(float(parts[16]))
 
 # align
-time_axis = [scheduler_start_time + datetime.timedelta(seconds=i * interval_duration) for i in range(intervals)]
+time_axis = [datetime.datetime.fromtimestamp(timestamp_start/1000.0)-datetime.timedelta(hours=2) + datetime.timedelta(seconds=i * interval_duration) for i in range(intervals)]
+timestamp_latency = zip(time_axis, p95_latency)
+timestamp_latency = [l for (t, l) in timestamp_latency if t >= scheduler_start_time and t <= scheduler_end_time]
 
-#time_axis = [datetime.datetime.fromtimestamp(timestamp_start/1000.0)-datetime.timedelta(hours=2) + datetime.timedelta(seconds=i * interval_duration) for i in range(intervals)]
+print(timestamp_latency)
 
+timestamp_latency_violation = [l for l in timestamp_latency if l >= 1000.0]
+
+print(timestamp_latency_violation)
+print(len(timestamp_latency_violation)/len(timestamp_latency))
 time_axis_start_time = scheduler_start_time
 time_axis_end_time = scheduler_end_time
 time_axis = [(t - time_axis_start_time).total_seconds() for t in time_axis]
@@ -83,6 +89,7 @@ axA2.fill_between(time_axis, 0, [q / 1000 for q in qps], color='green', alpha=0.
 axA2.set_ylabel('QPS (kQPS)')
 axA2.set_ylim(0, 100)
 axA2.legend(loc='upper right')
+axA2.set_title('3A')
 
 # B: memcached CPU QPS
 core_times = [(t[0] - time_axis_start_time).total_seconds() for t in memcached_cores]
@@ -97,6 +104,7 @@ axB.set_ylabel('Memcached CPU Cores')
 axB.set_ylim(0, 4)
 axB.set_yticks(range(0, 5))  
 axB.legend(loc='upper left')
+axB.set_title('3B')
 
 axB2 = axB.twinx()
 axB2.fill_between(time_axis, 0, [q / 1000 for q in qps], color='green', alpha=0.3, label='QPS (kQPS)')

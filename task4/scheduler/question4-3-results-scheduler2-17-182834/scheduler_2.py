@@ -5,11 +5,27 @@ import sys
 import docker
 import time
 
-SLEEP_TIME = 0.5 # TODO: find suitable value or remove sleep
+# POLICY
+# We have 2 list of jobs: small and large ones
+# if the load memcached is low:
+#       - run memcached on cores 0
+#       - run a large job on cores 1,2,3 
+#       - pause small jobs 
+#       - if all large jobs finished, we run a small job instead
+#       
+# if the load on memcaches is high:
+#       - run memcacched on cores 0,1
+#       - run a small job on cores 2,3
+#       - pause large jobs
+#
+# whether the load on memcached is low or high is determined by monitoring the CPU utilization of the memcached cores.
 
-THRESHOLD_HIGH = 90
-THRESHOLD_LOW = 60
-TOLERANCE = 10
+
+SLEEP_TIME = 0.2 # TODO: find suitable value or remove sleep
+
+THRESHOLD_HIGH = 25
+THRESHOLD_LOW = 15
+# TOLERANCE = 10
 
 class BatchJob(object):
     name = ""
@@ -71,7 +87,7 @@ class BatchJob(object):
                                                command=self.command)
         logger.job_start(self.name, [str(c) for c in cpu_set], self.num_threads)
         self.start_time = time.time()
-        print(f"Start {self}")
+        # print(f"Start {self}")
         self.container = container
 
     def pause_job(self, logger):
@@ -79,13 +95,13 @@ class BatchJob(object):
             return False
         self.container.reload()
         if not self.is_running():
-            print(f"WARN: Cannot pause {self.name} because job is not running.")
+            # print(f"WARN: Cannot pause {self.name} because job is not running.")
             return False
         try:
             self.container.pause()
             logger.job_pause(self.name)
             self.runtime = self.runtime + (time.time() - self.start_time)
-            print(f"Pause {self}")
+            # print(f"Pause {self}")
             return True
         except:
             print(f"ERROR: Could not pause job {self.name}")
@@ -96,13 +112,13 @@ class BatchJob(object):
             return False
         self.container.reload()
         if not self.is_paused():
-            print(f"WARN: Cannot unpause {self.name} because job is not paused.")
+            # print(f"WARN: Cannot unpause {self.name} because job is not paused.")
             return False
         try:
             self.container.unpause()
             logger.job_unpause(self.name)
             self.start_time = time.time()
-            print(f"Unpause {self}")
+            # print(f"Unpause {self}")
             return True
         except:
             print(f"ERROR: Could not unpause job {self.name}")
@@ -112,7 +128,7 @@ class BatchJob(object):
         if not self.container is None:
             self.container.reload()
         if not self.has_finished():
-            print(f"WARN: Cannot finish {self.name} because job is not done yet.")
+            # print(f"WARN: Cannot finish {self.name} because job is not done yet.")
             return False
         elif self.container is None: # job has been removed already
             return True
@@ -121,16 +137,17 @@ class BatchJob(object):
                 self.container.reload()
                 result = self.container.wait()
                 exit_code = result["StatusCode"]
+                logger.custom_event(self.name, f"exit code {exit_code}")
+                # print("Try to remove")
                 self.container.remove()
                 if exit_code != 0:
                     print(f"ERROR: The following container exited with code {exit_code}\n{self}\nContainer stats: {result}")
                     exit(-1)
                 logger.job_end(self.name)
-                logger.custom_event(f"{self.name} runtime={self.runtime}")
+                logger.custom_event(self.name, f"runtime (s) {self.runtime}")
                 self.runtime = self.runtime + (time.time() - self.start_time)
                 self.container = None
                 self.has_finished_ = True
-                print(f"Finished {self}. Runtime {self.runtime}s")
                 return True
             except:
                 print(f"ERROR: Could not finish job {self.name}")
@@ -141,13 +158,13 @@ class BatchJob(object):
             return False
         self.container.reload()
         if self.container is None or self.has_finished():
-            print(f"WARN: Cannot update {self.name} because job is not running.")
+            # print(f"WARN: Cannot update {self.name} because job is not running.")
             return False
 
         self.container.update(cpuset_cpus=",".join([str(c) for c in cpu_set]))
         logger.update_cores(self.name, [str(c) for c in cpu_set])
         self.cores = cpu_set
-        print(f"Update cores {self}")
+        # print(f"Update cores {self}")
         return True
     
     def remove_container(self, force=False):
@@ -216,10 +233,12 @@ class MemcachedProcess(object):
         return self.pid
 
     def update_memcached_cores(self, logger, cores, enable_log=True):
+        if cores == self.cores:
+            return
         if len(self.pid) == 0:
             print(f"ERROR: Could not update memcached cores because pid is None")
             return False
-        print(f'Update memcache (pid: {self.pid}) CPUs to {cores}')
+        # print(f'Update memcache (pid: {self.pid}) CPUs to {cores}')
         for pid in self.pid:
             command = f'sudo taskset -a -cp {",".join([str(c) for c in cores])} {pid}'
             subprocess.run(command.split(" "), stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
@@ -266,11 +285,12 @@ class Scheduler(object):
                 job.finish_job(self.logger)
 
     def print_job_status(self):
-        print("\n== JOB STATUS ==")
         for job in self.get_all_jobs():
             print(f"{job.name} - {job.get_status()}")
 
     def update_cores_all_jobs(self, cpu_set):
+        if cpu_set == self.job_cores:
+            return
         self.job_cores = cpu_set
         for job in self.get_all_jobs():
             job.update_cores(cpu_set, self.logger)
@@ -296,8 +316,8 @@ class Scheduler(object):
     def end_run(self):
         runtime = time.time() - self.start_time
         self.remove_finished_jobs()
+        self.logger.custom_event(slogger.Job.SCHEDULER, f"runtime (s) {runtime}")
         self.logger.end()
-        self.logger.custom_event(f"Total runtime={runtime}s")
         print("All jobs have finished. Force removing all containers in 10s...")
         time.sleep(10)
         self.remove_all_jobs(force=True)
@@ -305,6 +325,9 @@ class Scheduler(object):
     def reload_all_jobs(self):
         for j in self.get_all_jobs():
             j.reload_stats()
+
+    def can_run_one_job(self, jobs: list[BatchJob]) -> bool:
+        return len([j for j in jobs if j.is_running() or j.is_new() or j.is_paused()]) > 0
 
     def ensure_one_job_runs(self, jobs: list[BatchJob]):
         running_jobs = [j for j in jobs if j.is_running()]
@@ -334,14 +357,16 @@ class Scheduler(object):
     # main method!
     def run(self):
         self.start_run()
-        # only switch between HIGH and LOW load when CPU utilization was "out of bounds" multiple times
-        # -> reducing context switches
-        count_cpu_out_of_bounds = 0 
+
+        keep_on_high = 3 # avoid switching too quickly
 
         while True:
             self.reload_all_jobs()
             if self.check_all_jobs_finished():
                 break
+
+            self.remove_finished_jobs()
+            keep_on_high = keep_on_high - 1
 
             cpu_usage = self.get_cpu_usage()
             cpu_usage_memcached = sum([cpu_usage[i] for i in memcached.cores])
@@ -352,40 +377,35 @@ class Scheduler(object):
             job_string = "\n".join([str(j) for j in self.get_all_jobs()])
             print(job_string)
 
-            if cpu_usage_memcached > THRESHOLD_LOW + THRESHOLD_LOW or (cpu_usage_memcached > THRESHOLD_LOW and count_cpu_out_of_bounds > 3):
-                self.memcached.update_memcached_cores(self.logger, [0,1])
-                self.update_cores_all_jobs([2,3])
-                count_cpu_out_of_bounds = 0
-            elif len(self.memcached.cores) == 2 and (cpu_usage_memcached < THRESHOLD_HIGH - THRESHOLD_LOW \
-                                                   or (cpu_usage_memcached < THRESHOLD_HIGH and count_cpu_out_of_bounds > 3)):
-                self.memcached.update_memcached_cores(self.logger, [0])
-                self.update_cores_all_jobs([1,2,3])
-                count_cpu_out_of_bounds = 0
-            elif len(self.memcached.cores) == 2 and cpu_usage_memcached < THRESHOLD_HIGH:
-                count_cpu_out_of_bounds = count_cpu_out_of_bounds + 1
-            elif len(self.memcached.cores) == 1 and cpu_usage_memcached > THRESHOLD_LOW:
-                count_cpu_out_of_bounds = count_cpu_out_of_bounds + 1
-            else:
-                count_cpu_out_of_bounds = 0
-                
+            if cpu_usage_memcached > THRESHOLD_HIGH:
+                if len(self.memcached.cores) < 2:
+                    self.memcached.update_memcached_cores(self.logger, [0,1])
+                    self.update_cores_all_jobs([2,3])
+                    keep_on_high = 5
+            elif cpu_usage_memcached < THRESHOLD_LOW:
+                if keep_on_high < 0 and len(self.memcached.cores) > 1:
+                    self.memcached.update_memcached_cores(self.logger, [0])
+                    self.update_cores_all_jobs([1,2,3])
 
             if len(self.memcached.cores) == 1:
-                # run a large and a small job if possible
-                self.ensure_one_job_runs(self.large_jobs)
-                self.ensure_one_job_runs(self.small_jobs)
-            elif len(self.memcached.cores) == 2:
-                # run only a small job
-                is_running = self.ensure_one_job_runs(self.large_jobs)
-                if not is_running:
-                    self.ensure_one_job_runs(self.small_jobs)
-                else:
+                # run a large job if possible, otherwise run a small job
+                if self.can_run_one_job(self.large_jobs):
                     self.pause_all_jobs(self.small_jobs)
-                
+                    time.sleep(0.1)
+                    self.ensure_one_job_runs(self.large_jobs) 
+                else:
+                    self.ensure_one_job_runs(self.small_jobs)
+                    
+            elif len(self.memcached.cores) == 2:
+                # only run a small job
+                self.pause_all_jobs(self.large_jobs)
+                time.sleep(0.1)
+                self.ensure_one_job_runs(self.small_jobs)
                 
             self.reload_all_jobs()
             if self.check_all_jobs_finished():
                 break
-            print("Sleep")
+            self.get_cpu_usage()
             time.sleep(SLEEP_TIME)
 
         self.end_run()
@@ -398,8 +418,10 @@ if len(pids) != 1:
     exit(-1)
 
 scheduler = Scheduler(memcached, 
-                      small_jobs=[VipsJob(), RadixJob(), BlackscholesJob()],
-                      large_jobs=[DedupJob(), CannealJob() , FerretJob(), FreqmineJob()])
+                      small_jobs=[BlackscholesJob(), RadixJob(), VipsJob(), CannealJob(), FreqmineJob()],
+                      large_jobs=[FerretJob(), DedupJob()])
+                    #   small_jobs=[BlackscholesJob(), RadixJob(), CannealJob(), VipsJob(), DedupJob()],
+                    #   large_jobs=[FerretJob(), FreqmineJob()])
 try:
     scheduler.run()
 except Exception as e:

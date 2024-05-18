@@ -2,6 +2,8 @@
 # These are the instructions to run part 4.3 and 4.4
 # Note that scheduler_logger.py was provided by the course organizers and we did not modify it
 
+# NOTE: part_4_4_results_group_001 contains the results for running with 5s interval
+
 
 > export KOPS_STATE_STORE=<your-gcp-state-store>
 > PROJECT='gcloud config get-value project'
@@ -33,25 +35,17 @@
 > sudo vim /etc/memcached.conf 
     # update line starting with "-m" to "-m 1024"
     # add a new line "-t 2"
-<<<<<<< HEAD
-    # update line starting with "-l" to "-l 10.0.16.7" [MEMCAHED_INTERNAL_IP]
-=======
     # update line starting with "-l" to "-l [MEMCACHE_INTERNAL_IP]" 
->>>>>>> dbb3454d8f5b701fb4dd16f20c14bc2e0bb7c251
     # save file and close it
 > sudo systemctl restart memcached
 > sudo systemctl status memcached
 
-<<<<<<< HEAD
-# experimentName can be freely chosen and will be used in logs and in the result folder name
-> ./run_experiment.sh 10.0.16.3 10.0.16.5 sm0x 98fd wq3t schedulerme
-=======
 # [NAME] can be freely chosen and will be used in logs and in the result folder name
 > ./run_experiment.sh [MEMCACHE_INTERNAL_IP] [AGENT_INTERNAL_IP] [AGENT_NAME] [CLIENT_NAME] [SERVER_NAME] [NAME]
->>>>>>> dbb3454d8f5b701fb4dd16f20c14bc2e0bb7c251
 # when prompted to do so, execute this on memcache-server
 > python3 scheduler/scheduler.py
 # wait until run_experiment.sh (don't kill it otherwise the logs from measure are lost!!)
 
 # copy the scheduler log file to the results folder created by run_experiment.sh
 gcloud compute scp --scp-flag=-r ubuntu@memcache-server-[SERVER_NAME]:/home/ubuntu/log[TIMESTAMP].txt jobs.txt --zone europe-west3-a
+
