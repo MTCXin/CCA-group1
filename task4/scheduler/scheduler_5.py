@@ -3,14 +3,29 @@ import scheduler_logger as slogger
 import subprocess
 import sys
 import docker
-from time import sleep
+import time
 
-SLEEP_TIME = 0.5 # TODO: find suitable value or remove sleep
+# POLICY
+# We have 2 list of jobs: small and large ones
+# if the load memcached is low:
+#       - run memcached on cores 0
+#       - run a large job on cores 1,2,3 
+#       - pause small jobs 
+#       - if all large jobs finished, we run a small job instead
+#       
+# if the load on memcaches is high:
+#       - run memcacched on cores 0,1
+#       - run a small job on cores 2,3
+#       - pause large jobs
+#
+# whether the load on memcached is low or high is determined by monitoring the CPU utilization of the memcached cores.
 
-THRESHOLD_HIGH = 130
-THRESHOLD_LOW = 60
-THRESHOLD_LOWER = 30
-TOLERANCE = 10
+
+SLEEP_TIME = 0.2 # TODO: find suitable value or remove sleep
+
+THRESHOLD_HIGH = 25
+THRESHOLD_LOW = 15
+# TOLERANCE = 10
 
 class BatchJob(object):
     name = ""
@@ -20,6 +35,8 @@ class BatchJob(object):
     container = None # will be set once the container has been created
     cores = [] # will be set when the job is started and is updated dynamically
     has_finished_ = False # will be set once the container finished and was removed
+    start_time = None
+    runtime = 0.0
 
     def is_running(self):
         if self.container is None:
@@ -57,15 +74,6 @@ class BatchJob(object):
         self.container.reload()
         return self.container.status
 
-    def get_cpu_usage(self):
-        stats = self.container.stats(stream=False)
-        cpu_stats = stats['cpu_stats']
-        cpu_usage = cpu_stats['cpu_usage']
-        total_usage = cpu_usage['total_usage']
-        system_cpu_usage = cpu_stats['system_cpu_usage']
-        cpu_percent = (total_usage / system_cpu_usage) * 100
-        return cpu_percent
-
     def __str__(self):
         return f"{self.name} ({self.image}): \n\tcores = {self.cores}\n\tcommand = {self.command}\n\tstatus = {self.get_status()}" 
 
@@ -78,7 +86,8 @@ class BatchJob(object):
                                                image=self.image,
                                                command=self.command)
         logger.job_start(self.name, [str(c) for c in cpu_set], self.num_threads)
-        print(f"Start {self}")
+        self.start_time = time.time()
+        # print(f"Start {self}")
         self.container = container
 
     def pause_job(self, logger):
@@ -86,12 +95,13 @@ class BatchJob(object):
             return False
         self.container.reload()
         if not self.is_running():
-            print(f"WARN: Cannot pause {self.name} because job is not running.")
+            # print(f"WARN: Cannot pause {self.name} because job is not running.")
             return False
         try:
             self.container.pause()
             logger.job_pause(self.name)
-            print(f"Pause {self}")
+            self.runtime = self.runtime + (time.time() - self.start_time)
+            # print(f"Pause {self}")
             return True
         except:
             print(f"ERROR: Could not pause job {self.name}")
@@ -102,22 +112,23 @@ class BatchJob(object):
             return False
         self.container.reload()
         if not self.is_paused():
-            print(f"WARN: Cannot unpause {self.name} because job is not paused.")
+            # print(f"WARN: Cannot unpause {self.name} because job is not paused.")
             return False
         try:
             self.container.unpause()
             logger.job_unpause(self.name)
-            print(f"Unpause {self}")
+            self.start_time = time.time()
+            # print(f"Unpause {self}")
             return True
         except:
             print(f"ERROR: Could not unpause job {self.name}")
             return False 
         
-    def finish_job(self, logger):
+    def finish_job(self, logger: slogger.SchedulerLogger):
         if not self.container is None:
             self.container.reload()
         if not self.has_finished():
-            print(f"WARN: Cannot finish {self.name} because job is not done yet.")
+            # print(f"WARN: Cannot finish {self.name} because job is not done yet.")
             return False
         elif self.container is None: # job has been removed already
             return True
@@ -126,14 +137,17 @@ class BatchJob(object):
                 self.container.reload()
                 result = self.container.wait()
                 exit_code = result["StatusCode"]
+                logger.custom_event(self.name, f"exit code {exit_code}")
+                # print("Try to remove")
                 self.container.remove()
                 if exit_code != 0:
                     print(f"ERROR: The following container exited with code {exit_code}\n{self}\nContainer stats: {result}")
                     exit(-1)
                 logger.job_end(self.name)
+                logger.custom_event(self.name, f"runtime (s) {self.runtime}")
+                self.runtime = self.runtime + (time.time() - self.start_time)
                 self.container = None
                 self.has_finished_ = True
-                print(f"Finished {self}")
                 return True
             except:
                 print(f"ERROR: Could not finish job {self.name}")
@@ -144,13 +158,13 @@ class BatchJob(object):
             return False
         self.container.reload()
         if self.container is None or self.has_finished():
-            print(f"WARN: Cannot update {self.name} because job is not running.")
+            # print(f"WARN: Cannot update {self.name} because job is not running.")
             return False
 
         self.container.update(cpuset_cpus=",".join([str(c) for c in cpu_set]))
         logger.update_cores(self.name, [str(c) for c in cpu_set])
         self.cores = cpu_set
-        print(f"Update cores {self}")
+        # print(f"Update cores {self}")
         return True
     
     def remove_container(self, force=False):
@@ -224,7 +238,7 @@ class MemcachedProcess(object):
         if len(self.pid) == 0:
             print(f"ERROR: Could not update memcached cores because pid is None")
             return False
-        print(f'Update memcache (pid: {self.pid}) CPUs to {cores}')
+        # print(f'Update memcache (pid: {self.pid}) CPUs to {cores}')
         for pid in self.pid:
             command = f'sudo taskset -a -cp {",".join([str(c) for c in cores])} {pid}'
             subprocess.run(command.split(" "), stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
@@ -246,19 +260,21 @@ class Scheduler(object):
         self.small_jobs = small_jobs
         self.large_jobs = large_jobs
         self.memcached.get_pid()
+        self.start_time = 0.0
 
     def get_all_jobs(self) -> list[BatchJob]:
         return self.small_jobs + self.large_jobs
     
-    # CPU usage per core
-    def get_cpu_usage(self):
-        return psutil.cpu_percent(interval=None, percpu=True)
     #CPU usage for memcache process
     def get_pid_cpu(self):
         pid = self.memcached.pid[0]
         process = psutil.Process(pid)
         cpu_usage = process.cpu_percent(interval=None)
         return cpu_usage
+
+    # CPU usage per core
+    def get_cpu_usage(self):
+        return psutil.cpu_percent(interval=None, percpu=True)
     
     def check_all_jobs_finished(self):
         return all(j.has_finished() for j in self.get_all_jobs())
@@ -269,7 +285,6 @@ class Scheduler(object):
                 job.finish_job(self.logger)
 
     def print_job_status(self):
-        print("\n== JOB STATUS ==")
         for job in self.get_all_jobs():
             print(f"{job.name} - {job.get_status()}")
 
@@ -290,23 +305,29 @@ class Scheduler(object):
         self.memcached.update_memcached_cores(self.logger, [0,1], enable_log=False)
         self.get_pid_cpu()
         self.get_cpu_usage()
-        sleep(2)
+        time.sleep(2)
         print("Start scheduler")
         self.logger = slogger.SchedulerLogger()
         self.logger.job_start(slogger.Job.MEMCACHED, ["0","1"], 2)
         self.job_cores = [2,3]
         self.start_or_unpause_job(self.small_jobs)
+        self.start_time = time.time()
 
     def end_run(self):
+        runtime = time.time() - self.start_time
         self.remove_finished_jobs()
+        self.logger.custom_event(slogger.Job.SCHEDULER, f"runtime (s) {runtime}")
         self.logger.end()
         print("All jobs have finished. Force removing all containers in 10s...")
-        sleep(10)
+        time.sleep(10)
         self.remove_all_jobs(force=True)
 
     def reload_all_jobs(self):
         for j in self.get_all_jobs():
             j.reload_stats()
+
+    def can_run_one_job(self, jobs: list[BatchJob]) -> bool:
+        return len([j for j in jobs if j.is_running() or j.is_new() or j.is_paused()]) > 0
 
     def ensure_one_job_runs(self, jobs: list[BatchJob]):
         running_jobs = [j for j in jobs if j.is_running()]
@@ -336,47 +357,56 @@ class Scheduler(object):
     # main method!
     def run(self):
         self.start_run()
+
+        keep_on_high = 3 # avoid switching too quickly
+
         while True:
             self.reload_all_jobs()
             if self.check_all_jobs_finished():
                 break
 
-            # cpu_usage = self.get_cpu_usage()
-            pid = self.memcached.pid[0]
-            process = psutil.Process(pid)
-            process.cpu_percent(interval=None)
-            # self.get_pid_cpu()
-            sleep(1)
-            cpu_usage_memcached = process.cpu_percent(interval=None)
-            # cpu_usage_memcached = self.get_pid_cpu()
-            # print(f"CPU utilization = {cpu_usage}")
+            self.remove_finished_jobs()
+            keep_on_high = keep_on_high - 1
+
+            cpu_usage = self.get_cpu_usage()
+            cpu_usage_memcached = sum([cpu_usage[i] for i in memcached.cores])
+            print(f"CPU utilization = {cpu_usage}")
             print(f"memcached CPU utilization = {cpu_usage_memcached}")
             print(self.memcached)
 
             job_string = "\n".join([str(j) for j in self.get_all_jobs()])
             print(job_string)
 
-            # 根据 CPU 利用率的高低决定运行任务的逻辑
             if cpu_usage_memcached > THRESHOLD_HIGH:
-                # 如果 memcached 的 CPU 利用率高于高阈值，暂停所有小任务并确保运行一个大任务（如果可能的话）
-                self.pause_all_jobs(self.small_jobs)
-                sleep(0.1)
-                self.ensure_one_job_runs(self.large_jobs)
+                if len(self.memcached.cores) < 2:
+                    self.memcached.update_memcached_cores(self.logger, [0,1])
+                    self.update_cores_all_jobs([2,3])
+                    keep_on_high = 5
             elif cpu_usage_memcached < THRESHOLD_LOW:
-                # 如果 memcached 的 CPU 利用率低于低阈值，暂停所有大任务并确保运行一个小任务
+                if keep_on_high < 0 and len(self.memcached.cores) > 1:
+                    self.memcached.update_memcached_cores(self.logger, [0])
+                    self.update_cores_all_jobs([1,2,3])
+
+            if len(self.memcached.cores) == 1:
+                # run a large job if possible, otherwise run a small job
+                if self.can_run_one_job(self.large_jobs):
+                    self.pause_all_jobs(self.small_jobs)
+                    time.sleep(0.1)
+                    self.ensure_one_job_runs(self.large_jobs) 
+                else:
+                    self.ensure_one_job_runs(self.small_jobs)
+                    
+            elif len(self.memcached.cores) == 2:
+                # only run a small job
                 self.pause_all_jobs(self.large_jobs)
-                sleep(0.1)
+                time.sleep(0.1)
                 self.ensure_one_job_runs(self.small_jobs)
-            else:
-                # 如果 memcached 的 CPU 利用率在阈值范围内，确保继续运行之前正在运行的任务
-                self.ensure_one_job_runs(self.small_jobs)
-                self.ensure_one_job_runs(self.large_jobs)
                 
             self.reload_all_jobs()
             if self.check_all_jobs_finished():
                 break
-            print("Sleep")
-            sleep(SLEEP_TIME)
+            self.get_cpu_usage()
+            time.sleep(SLEEP_TIME)
 
         self.end_run()
 
@@ -388,8 +418,10 @@ if len(pids) != 1:
     exit(-1)
 
 scheduler = Scheduler(memcached, 
-                      small_jobs=[VipsJob(), RadixJob(), BlackscholesJob()],
-                      large_jobs=[DedupJob(), CannealJob() , FerretJob(), FreqmineJob()])
+                      small_jobs=[BlackscholesJob(), RadixJob(), VipsJob(), CannealJob(), FreqmineJob()],
+                      large_jobs=[FerretJob(), DedupJob()])
+                    #   small_jobs=[BlackscholesJob(), RadixJob(), CannealJob(), VipsJob(), DedupJob()],
+                    #   large_jobs=[FerretJob(), FreqmineJob()])
 try:
     scheduler.run()
 except Exception as e:

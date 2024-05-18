@@ -35,13 +35,13 @@ gcloud compute scp --scp-flag=-r ubuntu@memcache-server-62bj:/home/ubuntu/log202
 > sudo vim /etc/memcached.conf # update the file content as described below
     # update line starting with "-m" to "-m 1024"
     # add a new line "-t 2"
-    # update line starting with "-l" to "-l 10.0.16.5" [MEMCAHED_INTERNAL_IP]
+    # update line starting with "-l" to "-l 10.0.16.7" [MEMCAHED_INTERNAL_IP]
     # save file and close it
 > sudo systemctl restart memcached
 > sudo systemctl status memcached # make sure the changes have been applied
 
 # experimentName can be freely chosen and will be used in logs and in the result folder name
-> ./run_experiment.sh 10.0.16.5 10.0.16.3 zt6m 0r2f 62bj scheduler2
+> ./run_experiment.sh 10.0.16.3 10.0.16.5 sm0x 98fd wq3t schedulerme
 # when prompted to do so, execute this on memcache-server
 > python3 scheduler/scheduler.py
 # wait until run_experiment.sh (don't kill it otherwise the logs from measure are lost!!)

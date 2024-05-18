@@ -1,0 +1,42 @@
+echo start schedulerlala run 0
+cd memcache-perf-dynamic
+./mcperf -T 16 -A
+Welcome to Ubuntu 22.04.3 LTS (GNU/Linux 6.5.0-1013-gcp x86_64)
+
+ * Documentation:  https://help.ubuntu.com
+ * Management:     https://landscape.canonical.com
+ * Support:        https://ubuntu.com/pro
+
+  System information as of Sat May 18 17:59:48 UTC 2024
+
+  System load:  0.05615234375      Processes:             234
+  Usage of /:   4.0% of 123.87GB   Users logged in:       0
+  Memory usage: 1%                 IPv4 address for ens4: 10.0.16.5
+  Swap usage:   0%
+
+
+Expanded Security Maintenance for Applications is not enabled.
+
+86 updates can be applied immediately.
+59 of these updates are standard security updates.
+To see these additional updates run: apt list --upgradable
+
+Enable ESM Apps to receive additional future security updates.
+See https://ubuntu.com/esm or run: sudo pro status
+
+
+*** System restart required ***
+Last login: Sat May 18 17:36:39 2024 from 212.25.19.61
+echo start schedulerlala run 0
+cd memcache-perf-dynamic
+./mcperf -T 16 -A
+ubuntu@client-agent-sm0x:~$ echo start schedulerlala run 0
+start schedulerlala run 0
+ubuntu@client-agent-sm0x:~$ cd memcache-perf-dynamic
+ubuntu@client-agent-sm0x:~/memcache-perf-dynamic$ ./mcperf -T 16 -A
+Local QPS = 50610.2 (45549160 / 900.0s) - 45549160.0, 0.0
+#type       avg     std     min      p5     p10     p50     p67     p75     p80
+    p85     p90     p95     p99    p999   p9999 QPS
+read      420.8   174.2   173.5   243.2   267.3   409.9   448.1   467.9   484.5
+  503.2   534.0   597.4  1048.7  2191.7  4528.5  50610.2
+
